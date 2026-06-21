@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 
 interface EventData {
   id: number;
@@ -29,7 +30,7 @@ export const useEventStore = create<EventState>((set, get) => ({
   fetchEvents: async () => {
     set({ loading: true });
     try {
-      const response = await axios.get("http://localhost:3000/events");
+      const response = await axios.get(`${API_BASE_URL}/events`);
       set({ events: response.data, loading: false });
     } catch (error) {
       console.error("Gagal mengambil data:", error);
@@ -39,7 +40,7 @@ export const useEventStore = create<EventState>((set, get) => ({
 
   addEvent: async (formData) => {
     try {
-      const response = await axios.post("http://localhost:3000/events", formData);
+      const response = await axios.post(`${API_BASE_URL}/events`, formData);
       if (response.status === 201) {
         get().fetchEvents();
         return true;
@@ -53,7 +54,7 @@ export const useEventStore = create<EventState>((set, get) => ({
 
   deleteEvent: async (id) => {
     try {
-      const response = await axios.delete(`http://localhost:3000/events/${id}`);
+      const response = await axios.delete(`${API_BASE_URL}/events/${id}`);
       if (response.status === 200) {
         get().fetchEvents();
         return true;
@@ -68,7 +69,7 @@ export const useEventStore = create<EventState>((set, get) => ({
   // 2. Tambahkan fungsi update di bawah ini
   updateEvent: async (id, formData) => {
     try {
-      const response = await axios.put(`http://localhost:3000/events/${id}`, formData);
+      const response = await axios.put(`${API_BASE_URL}/events/${id}`, formData);
       if (response.status === 200) {
         get().fetchEvents();
         return true;

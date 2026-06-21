@@ -1,85 +1,146 @@
-import { useEffect } from "react";
-import { useCategoryStore } from "../../stores/categoryStore";
-import { useEventStore } from "../../stores/eventStore";
-import { usePembicaraStore } from "../../stores/PembicaraStore";
-import { LayoutGrid, CalendarDays, Users, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import { API_BASE_URL } from "../../config";
+import { 
+  CheckCircle, 
+  MapPin, 
+  Calendar,
+  CreditCard,
+  Users,
+  Trophy,
+  Vote
+} from "lucide-react";
 
 export default function Dashboard() {
-  const { categories, fetchCategories } = useCategoryStore();
-  const { events, fetchEvents } = useEventStore();
-  const { pembicaraList, fetchPembicara } = usePembicaraStore();
+  const [totalPleton, setTotalPleton] = useState(0);
+  const [totalVotes, setTotalVotes] = useState(0);
+  const [totalFinance, setTotalFinance] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCategories();
-    fetchEvents();
-    fetchPembicara();
-  }, [fetchCategories, fetchEvents, fetchPembicara]);
+    const fetchStats = async () => {
+      try {
+        const [speakersRes, txRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/speakers`),
+          axios.get(`${API_BASE_URL}/votes/transactions`)
+        ]);
+        
+        setTotalPleton(speakersRes.data.length);
+        
+        const votesSum = txRes.data.reduce((sum: number, tx: any) => sum + (tx.votesCount || 0), 0);
+        const financeSum = txRes.data.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
+        
+        setTotalVotes(votesSum);
+        setTotalFinance(financeSum);
+      } catch (error) {
+        console.error("Gagal mengambil data statistik dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchStats();
+  }, []);
 
-  // Statistik yang sudah disesuaikan (Event Aktif dihapus)
-  const stats = [
-    { title: "Kategori", value: categories.length, icon: LayoutGrid, color: "text-blue-600" },
-    { title: "Total Event", value: events.length, icon: CalendarDays, color: "text-purple-600" },
-    { title: "Pembicara", value: pembicaraList.length, icon: Users, color: "text-emerald-600" },
-  ];
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+      .format(value)
+      .replace("Rp", "Rp ");
+  };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-extrabold mb-2 text-[#7B1D3F] tracking-tight">Dashboard</h1>
-      <p className="mb-8 text-gray-500">Ringkasan performa dan data terbaru sistem Anda.</p>
-
-      {/* Statistik */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        {stats.map((item) => (
-          <div key={item.title} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-7 flex items-center justify-between hover:shadow-md transition-shadow">
-            <div>
-              <p className="text-sm font-medium text-gray-400 mb-1">{item.title}</p>
-              <p className="text-4xl font-bold text-gray-800">{item.value}</p>
+    <div className="max-w-7xl mx-auto flex flex-col gap-4 pb-12">
+      
+      {/* Top Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Total Pleton", value: loading ? "..." : String(totalPleton), icon: Users, color: "bg-[#00a54f]" },
+          { label: "Total Voting Masuk", value: loading ? "..." : totalVotes.toLocaleString("id-ID"), icon: Vote, color: "bg-blue-500" },
+          { label: "Total Keuangan", value: loading ? "..." : formatCurrency(totalFinance), icon: CreditCard, color: "bg-emerald-500" },
+          { label: "Status Voting", value: "Berjalan", icon: CheckCircle, color: "bg-indigo-500" },
+        ].map((item, idx) => (
+          <div key={idx} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
+            <div className={`${item.color} p-2.5 rounded-xl`}>
+              <item.icon size={20} className="text-white" />
             </div>
-            <div className={`p-4 rounded-2xl bg-gray-50 ${item.color}`}>
-              <item.icon size={28} />
+            <div>
+              <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800">{item.value}</h3>
+              <p className="text-[10px] sm:text-xs font-medium text-gray-500">{item.label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* EVENT TERBARU */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-          <h2 className="font-bold mb-6 text-[#7B1D3F] text-xl flex items-center gap-2">
-            <CalendarDays size={20} /> Event Terbaru
-          </h2>
-          <ul className="space-y-5">
-            {events.slice(-3).reverse().map((item) => (
-              <li key={item.id} className="flex justify-between items-center group cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition-colors">
-                <div>
-                  <p className="font-semibold text-gray-800">{item.nama}</p>
-                  <p className="text-gray-400 text-sm">
-                    {item.tanggal ? new Date(item.tanggal).toLocaleDateString("id-ID", { dateStyle: 'long' }) : "-"}
-                  </p>
-                </div>
-                <ChevronRight className="text-gray-300 group-hover:text-[#7B1D3F]" />
-              </li>
-            ))}
-          </ul>
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-[#00a54f] via-[#008f44] to-[#007a3a] rounded-3xl p-6 sm:p-10 text-white relative overflow-hidden shadow-lg">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-[#007a3a]/30 rounded-full blur-2xl transform translate-y-1/2"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-8">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold tracking-wider mb-4 border border-white/20 shadow-sm">
+              <MapPin size={14} />
+              Lokasi Forbasi Tegal
+            </div>
+            <h1 className="text-2xl md:text-4xl font-extrabold mb-3 flex items-center gap-3">
+              Selamat Datang! <span className="animate-wave inline-block origin-bottom-right">👋</span>
+            </h1>
+            <p className="text-green-50 text-sm md:text-base font-medium">
+              Kelola pleton, pantau keuangan, dan atur event dengan mudah
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-6 text-left md:text-right">
+            <div>
+              <p className="text-green-55 text-[10px] font-bold tracking-widest uppercase mb-1">HARI INI</p>
+              <p className="font-bold text-sm sm:text-lg">Minggu, 21 Jun</p>
+            </div>
+            <button className="bg-white/20 hover:bg-white/30 transition-colors p-4 sm:p-5 rounded-2xl backdrop-blur-sm border border-white/20 shadow-sm">
+              <Calendar size={20} className="text-white sm:w-6 sm:h-6" />
+            </button>
+          </div>
         </div>
+      </div>
 
-        {/* PEMBICARA TERBARU */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-          <h2 className="font-bold mb-6 text-[#7B1D3F] text-xl flex items-center gap-2">
-            <Users size={20} /> Pembicara Terbaru
-          </h2>
-          <ul className="space-y-5">
-            {pembicaraList.slice(-3).reverse().map((item) => (
-              <li key={item.id} className="flex justify-between items-center group cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition-colors">
-                <div>
-                  <p className="font-semibold text-gray-800">{item.nama}</p>
-                  <p className="text-gray-400 text-sm">{item.bidang}</p>
-                </div>
-                <ChevronRight className="text-gray-300 group-hover:text-[#7B1D3F]" />
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* Middle Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[
+          { label: "Keuangan", value: loading ? "..." : formatCurrency(totalFinance), icon: CreditCard, color: "bg-emerald-500", link: "/dashboard/finance" },
+          { label: "Total Pleton", value: loading ? "..." : String(totalPleton), icon: Users, color: "bg-[#00a54f]", link: "/dashboard/pleton" },
+          { label: "Event Lomba", value: "0", icon: Trophy, color: "bg-purple-500", link: "#" },
+        ].map((item, idx) => (
+          <Link key={idx} to={item.link} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3 hover:shadow-md transition-shadow">
+            <div className={`${item.color} p-2.5 rounded-xl`}>
+              <item.icon size={20} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800">{item.value}</h3>
+              <p className="text-[10px] sm:text-xs font-medium text-gray-500">{item.label}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Bottom Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { title: "Kelola Pleton", desc: "Manajemen data pleton", icon: Users, link: "/dashboard/pleton" },
+          { title: "Kelola Keuangan", desc: "Pantau data transaksi", icon: CreditCard, link: "/dashboard/finance" },
+        ].map((action, idx) => (
+          <Link key={idx} to={action.link} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+            <div className="bg-green-50 p-2.5 rounded-xl w-fit mb-3">
+              <action.icon size={20} className="text-[#00a54f]" />
+            </div>
+            <h4 className="font-bold text-gray-800 text-sm mb-0.5">{action.title}</h4>
+            <p className="text-[11px] text-gray-500 font-medium">{action.desc}</p>
+          </Link>
+        ))}
       </div>
     </div>
   );

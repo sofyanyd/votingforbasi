@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 
 interface CategoryData {
   id: number;
@@ -23,7 +24,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   fetchCategories: async () => {
     set({ loading: true });
     try {
-      const response = await axios.get("http://localhost:3000/categories");
+      const response = await axios.get(`${API_BASE_URL}/categories`);
       set({ categories: response.data, loading: false });
     } catch (error) {
       console.error("Gagal mengambil data kategori:", error);
@@ -34,7 +35,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   // 2. POST CATEGORY
   addCategory: async (formData) => {
     try {
-      const response = await axios.post("http://localhost:3000/categories", formData);
+      const response = await axios.post(`${API_BASE_URL}/categories`, formData);
       if (response.status === 201 || response.status === 200) {
         get().fetchCategories();
         return true;
@@ -49,7 +50,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   // 3. DELETE CATEGORY
   deleteCategory: async (id) => {
     try {
-      const response = await axios.delete(`http://localhost:3000/categories/${id}`);
+      const response = await axios.delete(`${API_BASE_URL}/categories/${id}`);
       if (response.status === 200) {
         get().fetchCategories();
         return true;
@@ -64,7 +65,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   // 4. PUT CATEGORY
   updateCategory: async (id, formData) => {
     try {
-      const response = await axios.put(`http://localhost:3000/categories/${id}`, formData);
+      const response = await axios.put(`${API_BASE_URL}/categories/${id}`, formData);
       if (response.status === 200) {
         get().fetchCategories();
         return true;

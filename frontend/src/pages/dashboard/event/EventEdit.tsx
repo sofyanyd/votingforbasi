@@ -21,13 +21,11 @@ export default function EventEdit() {
   
   const { register: login, handleSubmit, setValue, formState: { errors } } = useForm<EventFormInputs>();
 
-  // Ambil data lama dari store berdasarkan ID dan masukkan ke dalam input form (Prefill)
   useEffect(() => {
     const currentEvent = events.find((e) => e.id === Number(id));
     if (currentEvent) {
       setValue("nama", currentEvent.nama);
       setValue("lokasi", currentEvent.lokasi);
-      // Format tanggal ke bentuk YYYY-MM-DDTHH:MM agar sesuai dengan input datetime-local
       if (currentEvent.tanggal) {
         const formattedDate = new Date(currentEvent.tanggal).toISOString().slice(0, 16);
         setValue("tanggal", formattedDate);
@@ -98,7 +96,7 @@ export default function EventEdit() {
             error={errors.categoryId ? "Wajib diisi" : ""}
           />
           <Input 
-            label="ID Pembicara" 
+            label="ID Pleton" 
             name="pembicaraId" 
             type="number"
             register={login} 

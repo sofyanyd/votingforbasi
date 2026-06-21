@@ -1,85 +1,168 @@
+import { useState, useEffect } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/useAuthStore";
+import { 
+  LayoutDashboard, 
+  Users, 
+  Banknote, 
+  Trophy, 
+  PlusCircle, 
+  LogOut,
+  Menu,
+  UserCog
+} from "lucide-react";
 
 export default function DashboardLayout() {
+  // Initialize sidebar open based on screen size (default open on desktop, closed on mobile)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Close sidebar on mobile when navigating
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname]);
+
+  // Adjust sidebar on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const handleLogout = () => {
     logout();
+    localStorage.removeItem("token"); // Clear token to trigger ProtectedRoute redirect
     navigate("/login");
   };
 
-  // Helper untuk menandai menu yang aktif
   const isActive = (path: string) => location.pathname === path;
 
-  return (
-    <div className="flex w-full min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#7B1D3F] flex flex-col justify-between text-white shadow-xl">
-        <div>
-          {/* Logo Section - Menggunakan logo resmi dari Beranda */}
-          <div className="flex items-center justify-center px-6 h-24 border-b border-white/10">
-            <img
-              src="https://www.invofest-harkatnegeri.com/assets/nav-logo.png"
-              alt="INVOFEST Logo"
-              className="h-12 w-auto brightness-0 invert object-contain"
-            />
-          </div>
+  const NavItem = ({ to, icon: Icon, label, disabled = false }: { to: string, icon: any, label: string, disabled?: boolean }) => {
+    const active = isActive(to);
 
-          {/* Navigation */}
-          <nav className="flex flex-col gap-1 p-4 mt-4">
-            {[
-              { label: "Dashboard", to: "/dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-              { label: "Kategori Event", to: "/dashboard/category", icon: "M4 6h16M4 12h16M4 18h7" },
-              { label: "Event", to: "/dashboard/event", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-              { label: "Pembicara", to: "/dashboard/pembicara", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" },
-            ].map((menu) => (
-              <Link
-                key={menu.to}
-                to={menu.to}
-                className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-200 group ${
-                  isActive(menu.to)
-                    ? "bg-white text-[#7B1D3F] shadow-lg"
-                    : "hover:bg-white/10 text-pink-100"
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={menu.icon} />
-                </svg>
-                <span className="font-semibold text-sm">{menu.label}</span>
-              </Link>
-            ))}
-          </nav>
+    if (disabled) {
+      return (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 cursor-not-allowed opacity-60 transition-all duration-300 ${!isSidebarOpen && "justify-center px-0"}`}>
+          <Icon size={20} className="text-gray-450" />
+          {isSidebarOpen && <span className="text-sm truncate">{label}</span>}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        to={to}
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+          active
+            ? "bg-[#00a54f]/10 text-[#00a54f] font-semibold"
+            : "text-gray-600 hover:bg-gray-100 font-medium"
+        } ${!isSidebarOpen && "justify-center px-0"}`}
+        title={!isSidebarOpen ? label : ""}
+      >
+        <Icon size={20} className={active ? "text-[#00a54f]" : "text-gray-500"} />
+        {isSidebarOpen && <span className="text-sm truncate">{label}</span>}
+        {isSidebarOpen && active && (
+          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00a54f]"></div>
+        )}
+      </Link>
+    );
+  };
+
+  return (
+    <div className="flex w-full min-h-screen bg-emerald-50/40 relative">
+      
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/35 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <aside 
+        style={{ willChange: "width, transform" }}
+        className={`fixed md:sticky top-0 left-0 z-50 h-screen bg-white border-r border-gray-300 flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out ${
+          isSidebarOpen 
+            ? "w-56 translate-x-0" 
+            : "w-20 -translate-x-full md:translate-x-0"
+        }`}
+      >
+        <div className="flex items-center gap-3 px-6 h-16 overflow-hidden flex-shrink-0">
+          <div className="bg-[#00a54f] p-1.5 rounded-lg w-8 h-8 flex-shrink-0 flex items-center justify-center">
+            <span className="text-white font-bold text-xs">F</span>
+          </div>
+          {isSidebarOpen && (
+            <div className="whitespace-nowrap min-w-0 flex-1">
+              <h1 className="font-extrabold text-gray-800 text-sm leading-tight tracking-tight truncate">
+                FORBASI TEGAL
+              </h1>
+              <p className="text-[10px] font-bold text-[#00a54f] tracking-wider">ADMIN PANEL</p>
+            </div>
+          )}
         </div>
 
-        {/* Logout Section */}
-        <div className="p-4 border-t border-white/10">
+        <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1 custom-scrollbar">
+          <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+          <NavItem to="/dashboard/finance" icon={Banknote} label="Keuangan" />
+          <NavItem to="/dashboard/pleton" icon={Users} label="Pleton" />
+          <NavItem to="/dashboard/user" icon={UserCog} label="User Admin" />
+          {isSidebarOpen && (
+            <div className="mt-6 mb-2 px-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">EVENT</p>
+            </div>
+          )}
+          
+          <NavItem to="#" icon={Trophy} label="Event Kategori" disabled={true} />
+          <NavItem to="#" icon={PlusCircle} label="Event" disabled={true} />
+        </nav>
+
+        <div className="p-4 border-t border-gray-300 flex-shrink-0">
           <button
             onClick={handleLogout}
-            type="button"
-            className="flex items-center justify-center gap-2 p-3 bg-white/10 hover:bg-red-600 w-full rounded-xl transition-all duration-200 font-bold text-sm"
+            className={`flex items-center gap-3 px-4 py-2.5 w-full rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors font-medium text-sm ${!isSidebarOpen && "justify-center px-0"}`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Logout
+            <LogOut size={20} />
+            {isSidebarOpen && <span>Logout</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto">
-        {/* Top Header */}
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-end px-8 sticky top-0 z-10">
-           <div className="flex items-center gap-3">
-              <span className="text-gray-600 text-sm font-medium">Administrator</span>
-              <div className="w-10 h-10 rounded-full bg-[#7B1D3F] flex items-center justify-center text-white font-bold shadow-sm">A</div>
-           </div>
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="h-16 bg-emerald-50/40 border-b border-gray-300 flex items-center justify-between px-4 sm:px-8 flex-shrink-0 gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-white transition-colors flex-shrink-0"
+            >
+              <Menu size={20} />
+            </button>
+            <h2 className="font-extrabold text-[#00a54f] text-sm sm:text-base md:text-lg leading-tight tracking-tight truncate">
+              DASHBOARD FORBASI <span className="hidden xs:inline">KOTA TEGAL</span>
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
+            <span className="text-xs sm:text-sm font-medium text-gray-500 hidden sm:inline">Minggu, 21 Juni 2026</span> 
+            <div className="flex items-center gap-2 sm:gap-3 bg-white/50 py-1 sm:py-1.5 px-2 sm:px-3 rounded-full border border-emerald-100">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#00a54f]/20 flex items-center justify-center text-[#00a54f] font-bold text-xs">
+                A
+              </div>
+              <span className="text-xs sm:text-sm font-semibold text-[#00a54f]">Admin</span>
+            </div>
+          </div>
         </header>
 
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8 flex-1 overflow-y-auto">
            <Outlet />
         </div>
       </main>

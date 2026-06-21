@@ -5,7 +5,7 @@ import Input from "../../../components/ui/Input";
 import Button from "../../../components/ui/Button";
 import { useEventStore } from "../../../stores/eventStore";
 import { useCategoryStore } from "../../../stores/categoryStore"; 
-import { usePembicaraStore } from "../../../stores/PembicaraStore"; 
+import { usePletonStore } from "../../../stores/pletonStore"; 
 
 interface EventFormInputs {
   nama: string;
@@ -13,7 +13,7 @@ interface EventFormInputs {
   tanggal: string;
   deskripsi: string;
   categoryId: number;
-  pembicaraId: number;
+  pembicaraId: number; // Stays as pembicaraId for backend compatibility
 }
 
 export default function EventCreate() {
@@ -21,15 +21,14 @@ export default function EventCreate() {
   const { addEvent } = useEventStore();
   
   const { categories, fetchCategories } = useCategoryStore();
-  const { pembicaraList, fetchPembicara } = usePembicaraStore();
+  const { pletonList, fetchPleton } = usePletonStore();
   
   const { register: login, handleSubmit, formState: { errors } } = useForm<EventFormInputs>();
 
-  // Membaca data asli dari database cloud saat halaman dimuat
   useEffect(() => {
     fetchCategories();
-    fetchPembicara();
-  }, [fetchCategories, fetchPembicara]); // <-- Typo sudah diperbaiki di sini
+    fetchPleton();
+  }, [fetchCategories, fetchPleton]);
 
   const onSubmit = async (data: EventFormInputs) => {
     const payload = {
@@ -43,7 +42,7 @@ export default function EventCreate() {
       alert("Event baru berhasil disimpan!");
       navigate("/dashboard/event");
     } else {
-      alert("Gagal menambahkan event. Pastikan pilihan Kategori dan Pembicara sudah benar!");
+      alert("Gagal menambahkan event. Pastikan pilihan Kategori dan Pleton sudah benar!");
     }
   };
 
@@ -105,15 +104,15 @@ export default function EventCreate() {
             {errors.categoryId && <p className="text-xs text-red-500">Wajib diisi</p>}
           </div>
 
-          {/* DROP-DOWN PEMBICARA */}
+          {/* DROP-DOWN PEMBICARA -> PLETON */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-gray-700">Pembicara</label>
+            <label className="text-sm font-semibold text-gray-700">Pleton Peserta</label>
             <select 
               {...login("pembicaraId", { required: true })}
               className="w-full px-4 py-2 text-sm border border-gray-200 bg-white text-[#1a0a10] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B1D3F] h-[42px] transition"
             >
-              <option value="">-- Pilih Pembicara --</option>
-              {pembicaraList.map((pem) => (
+              <option value="">-- Pilih Pleton --</option>
+              {pletonList.map((pem) => (
                 <option key={pem.id} value={pem.id}>
                   {pem.nama}
                 </option>

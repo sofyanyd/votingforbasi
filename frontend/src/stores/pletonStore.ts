@@ -1,43 +1,46 @@
 import { create } from "zustand";
 import axios from "axios";
 
-interface PembicaraData {
+export interface PletonData {
   id: number;
   nama: string;
-  bidang: string;
+  bidang: string; 
   email: string; 
+  foto_url?: string;
 }
 
-interface PembicaraState {
-  pembicaraList: PembicaraData[]; 
+interface PletonState {
+  pletonList: PletonData[]; 
   loading: boolean;
-  fetchPembicara: () => Promise<void>; 
-  addPembicara: (formData: Omit<PembicaraData, "id">) => Promise<boolean>;
-  deletePembicara: (id: number) => Promise<boolean>;
-  updatePembicara: (id: number, formData: Omit<PembicaraData, "id">) => Promise<boolean>;
+  fetchPleton: () => Promise<void>; 
+  addPleton: (formData: Omit<PletonData, "id">) => Promise<boolean>;
+  deletePleton: (id: number) => Promise<boolean>;
+  updatePleton: (id: number, formData: Omit<PletonData, "id">) => Promise<boolean>;
 }
 
-const API_URL = "http://localhost:3000/speakers";
+import { API_BASE_URL } from "../config";
 
-export const usePembicaraStore = create<PembicaraState>((set, get) => ({
-  pembicaraList: [],
+const API_URL = `${API_BASE_URL}/speakers`;
+
+export const usePletonStore = create<PletonState>((set, get) => ({
+  pletonList: [],
   loading: false,
 
-  fetchPembicara: async () => {
+  fetchPleton: async () => {
     set({ loading: true });
     try {
       const response = await axios.get(API_URL);
-      set({ pembicaraList: response.data, loading: false });
+      set({ pletonList: response.data, loading: false });
     } catch (error) {
       set({ loading: false });
     }
   },
 
-  addPembicara: async (formData) => {
+  addPleton: async (formData) => {
     try {
       const response = await axios.post(API_URL, formData);
       if (response.status === 201 || response.status === 200) {
-        get().fetchPembicara();
+        get().fetchPleton();
         return true;
       }
       return false;
@@ -46,11 +49,11 @@ export const usePembicaraStore = create<PembicaraState>((set, get) => ({
     }
   },
 
-  deletePembicara: async (id) => {
+  deletePleton: async (id) => {
     try {
       const response = await axios.delete(`${API_URL}/${id}`);
       if (response.status === 200) {
-        get().fetchPembicara();
+        get().fetchPleton();
         return true;
       }
       return false;
@@ -59,11 +62,11 @@ export const usePembicaraStore = create<PembicaraState>((set, get) => ({
     }
   },
 
-  updatePembicara: async (id, formData) => {
+  updatePleton: async (id, formData) => {
     try {
       const response = await axios.put(`${API_URL}/${id}`, formData);
       if (response.status === 200) {
-        get().fetchPembicara();
+        get().fetchPleton();
         return true;
       }
       return false;
@@ -73,5 +76,6 @@ export const usePembicaraStore = create<PembicaraState>((set, get) => ({
   },
 }));
 
-// Jembatan untuk memastikan kode lama yang memakai 'useSpeakerStore' tetap jalan
-export const useSpeakerStore = usePembicaraStore;
+// Backwards compatibility aliases
+export const usePembicaraStore = usePletonStore;
+export const useSpeakerStore = usePletonStore;

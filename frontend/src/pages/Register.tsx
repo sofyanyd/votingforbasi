@@ -3,140 +3,114 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Mail, Lock, User, ArrowRight } from "lucide-react";
 
-// 1. Skema Validasi (Username dihapus)
-const schema = z
-    .object({
-        email: z.string().trim().toLowerCase().email("Format email tidak valid"),
-        password: z.string().min(6, "Password minimal 6 karakter"),
-        confirmPassword: z.string().min(1, "Konfirmasi password wajib diisi"),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-        message: "Konfirmasi password tidak cocok",
-        path: ["confirmPassword"],
-    });
-
-type RegisterFormData = z.infer<typeof schema>;
+const schema = z.object({
+  name: z.string().min(3, "Nama minimal 3 karakter"),
+  email: z.string().trim().email("Format email tidak valid"),
+  password: z.string().min(8, "Password minimal 8 karakter"),
+});
 
 export default function Register() {
-    const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<RegisterFormData>({
-        resolver: zodResolver(schema),
-        mode: "onChange",
-    });
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(schema),
+  });
 
-    const onSubmit = async (data: RegisterFormData) => {
-        setLoading(true);
-        try {
-            await new Promise((resolve) => setTimeout(resolve, 800));
+  const onSubmit = (_data: any) => {
+    setLoading(true);
+    // Simulasi proses registrasi
+    setTimeout(() => {
+      alert("Akun berhasil dibuat! Silakan login.");
+      navigate("/login");
+    }, 1500);
+  };
 
-            // Simpan email dan password ke LocalStorage
-            const userToSave = {
-                email: data.email,
-                password: data.password,
-            };
+  return (
+    <div className="w-full max-w-md p-8 md:p-12">
+      <div className="mb-10 text-center lg:text-left">
+        <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-3 tracking-tight">Buat Akun Baru</h1>
+        <p className="text-slate-500 text-sm leading-relaxed">
+          Daftarkan dirimu untuk mulai mendukung pleton favorit di KEJURCAB 2026.
+        </p>
+      </div>
 
-            localStorage.setItem("registeredUser", JSON.stringify(userToSave));
-
-            alert("Pendaftaran berhasil! Silakan login.");
-            navigate("/login");
-        } catch (error) {
-            console.error("Register Error:", error);
-            alert("Terjadi kesalahan saat mendaftar.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-            <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md">
-
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-[#7B1D3F]">Registrasi Akun</h1>
-                    <p className="text-gray-500 mt-2">Lengkapi data untuk bergabung</p>
-                </div>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
-                    {/* Email */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            {...register("email")}
-                            placeholder="Masukan email anda"
-                            className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-[#7B1D3F] outline-none transition-all ${errors.email ? "border-red-500 bg-red-50" : "border-gray-300"
-                                }`}
-                        />
-                        {errors.email && (
-                            <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
-                        )}
-                    </div>
-
-                    {/* Passwords */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Password
-                            </label>
-                            <input
-                                type="password"
-                                {...register("password")}
-                                placeholder="Masukan password"
-                                className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-[#7B1D3F] outline-none transition-all ${errors.password ? "border-red-500 bg-red-50" : "border-gray-300"
-                                    }`}
-                            />
-                            {errors.password && (
-                                <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Konfirmasi
-                            </label>
-                            <input
-                                type="password"
-                                {...register("confirmPassword")}
-                                placeholder="Konfirmasi password"
-                                className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-[#7B1D3F] outline-none transition-all ${errors.confirmPassword ? "border-red-500 bg-red-50" : "border-gray-300"
-                                    }`}
-                            />
-                            {errors.confirmPassword && (
-                                <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Submit Button */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`w-full py-3 rounded-lg font-semibold text-white transition-colors mt-4 ${loading
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-[#7B1D3F] hover:bg-[#5a152e]"
-                            }`}
-                    >
-                        {loading ? "Memproses..." : "Daftar Sekarang"}
-                    </button>
-                </form>
-
-                <p className="text-sm text-center mt-6 text-gray-600">
-                    Sudah punya akun?{" "}
-                    <Link to="/login" className="text-[#7B1D3F] font-bold hover:underline">
-                        Login di sini
-                    </Link>
-                </p>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {/* Input Nama */}
+        <div>
+          <label className="block mb-2 font-bold text-slate-700 text-sm">Nama Lengkap</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <User className="h-5 w-5 text-slate-400" />
             </div>
+            <input
+              {...register("name")}
+              placeholder="Nama Lengkap"
+              className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+            />
+          </div>
+          {errors.name && <p className="text-xs font-bold text-red-500 mt-2 ml-1">{errors.name.message as string}</p>}
         </div>
-    );
+
+        {/* Input Email */}
+        <div>
+          <label className="block mb-2 font-bold text-slate-700 text-sm">Alamat Email</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Mail className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              {...register("email")}
+              placeholder="contoh@email.com"
+              className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+            />
+          </div>
+          {errors.email && <p className="text-xs font-bold text-red-500 mt-2 ml-1">{errors.email.message as string}</p>}
+        </div>
+
+        {/* Input Password */}
+        <div>
+          <label className="block mb-2 font-bold text-slate-700 text-sm">Kata Sandi</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Lock className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              type="password"
+              {...register("password")}
+              placeholder="••••••••"
+              className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+            />
+          </div>
+          {errors.password && <p className="text-xs font-bold text-red-500 mt-2 ml-1">{errors.password.message as string}</p>}
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full mt-4 flex items-center justify-center gap-2 text-white py-4 rounded-xl font-bold transition-all shadow-lg ${
+            loading 
+            ? "bg-emerald-400 cursor-not-allowed shadow-none" 
+            : "bg-emerald-600 hover:bg-emerald-700 hover:-translate-y-0.5 shadow-emerald-200"
+          }`}
+        >
+          {loading ? "Memproses..." : (
+            <>
+              <span>Daftar Sekarang</span>
+              <ArrowRight size={18} />
+            </>
+          )}
+        </button>
+      </form>
+
+      <p className="text-center text-slate-500 mt-8 text-sm">
+        Sudah memiliki akun?{" "}
+        <Link to="/login" className="text-emerald-600 font-black hover:underline underline-offset-4 transition-all">
+          Masuk Sekarang
+        </Link>
+      </p>
+    </div>
+  );
 }
