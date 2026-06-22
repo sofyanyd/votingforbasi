@@ -114,6 +114,7 @@ export default function DashboardLayout() {
         <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1 custom-scrollbar">
           <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavItem to="/dashboard/finance" icon={Banknote} label="Keuangan" />
+          <NavItem to="/dashboard/category" icon={Users} label="Kategori Pleton" />
           <NavItem to="/dashboard/pleton" icon={Users} label="Pleton" />
           <NavItem to="/dashboard/user" icon={UserCog} label="User Admin" />
           {isSidebarOpen && (
@@ -122,7 +123,7 @@ export default function DashboardLayout() {
             </div>
           )}
           
-          <NavItem to="#" icon={Trophy} label="Event Kategori" disabled={true} />
+          <NavItem to="#" icon={PlusCircle} label="Kategori Event" disabled={true} />
           <NavItem to="#" icon={PlusCircle} label="Event" disabled={true} />
         </nav>
 

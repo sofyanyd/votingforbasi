@@ -22,6 +22,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import FinanceIndex from "./pages/dashboard/keuangan/FinanceIndex";
 import PletonManagemen from "./pages/dashboard/pleton/PletonManagemen";
 import UserManagemen from "./pages/dashboard/user/UserManagemen";
+import CategoryIndex from "./pages/dashboard/kategori/CategoryIndex";
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
             <Route path="/dashboard/finance" element={<FinanceIndex />} />
             <Route path="/dashboard/pleton" element={<PletonManagemen />} />
             <Route path="/dashboard/user" element={<UserManagemen />} />
+            <Route path="/dashboard/category" element={<CategoryIndex />} />
           </Route>
         </Route>
 

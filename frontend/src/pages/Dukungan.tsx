@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import Button from "../components/ui/Button"; // Menggunakan komponen Button yang sudah dibuat
+import Button from "../components/ui/Button"; 
 import { Ticket, Sparkles } from "lucide-react";
 
 export default function Dukungan() {

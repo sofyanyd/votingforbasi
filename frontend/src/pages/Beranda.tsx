@@ -1,12 +1,11 @@
 import { useNavigate, Link } from "react-router-dom";
-import Button from "../components/ui/Button"; // Impor komponen Button
+import Button from "../components/ui/Button"; 
 import { Collapse } from "../components/ui/Collapse";
 import { Award, Vote, TrendingUp } from "lucide-react";
 
 export default function Dashboard() {
-    const navigate = useNavigate(); // Inisialisasi navigate untuk tombol
+    const navigate = useNavigate(); 
 
-    // ── DATA FAQ UNTUK VOTING ──
     const faqItems = [
         { title: "Apa itu Voting KEJURCAB?", description: "Ini adalah platform pemungutan suara resmi untuk menentukan juara favorit pada ajang Lomba Keterampilan Baris Berbaris (LKBB) Tingkat Cabang (KEJURCAB) Tahun 2026." },
         { title: "Bagaimana cara melakukan voting?", description: "Kamu bisa pergi ke tab 'Finalis', pilih pleton jagoanmu, lalu klik tombol 'Vote'. Pastikan kamu sudah memiliki tiket/kuota vote yang valid." },

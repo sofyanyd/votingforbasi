@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { usePletonStore, type PletonData } from "../../../stores/pletonStore";
+import { useCategoryStore } from "../../../stores/categoryStore";
 import { 
   Plus, 
   Search, 
@@ -12,6 +13,7 @@ import {
 
 export default function PletonManagemen() {
   const { pletonList, loading, fetchPleton, addPleton, updatePleton, deletePleton } = usePletonStore();
+  const { categories, fetchCategories } = useCategoryStore();
 
   // Search State
   const [search, setSearch] = useState("");
@@ -27,6 +29,7 @@ export default function PletonManagemen() {
   const [email, setEmail] = useState("");
   const [foto, setFoto] = useState("");
   const [fotoPreview, setFotoPreview] = useState("");
+  const [categoryId, setCategoryId] = useState<number | string>("");
 
   // Toast notification
   const [toast, setToast] = useState<{ message: string; type: "success" | "loading" | "error" | null }>({
@@ -37,6 +40,7 @@ export default function PletonManagemen() {
   // Inject font Plus Jakarta Sans
   useEffect(() => {
     fetchPleton();
+    fetchCategories();
     
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap";
@@ -108,6 +112,7 @@ export default function PletonManagemen() {
       setEmail(pleton.email || "");
       setFoto(pleton.foto_url || "");
       setFotoPreview(pleton.foto_url || "");
+      setCategoryId(pleton.category_id || "");
     } else {
       setEditingId(null);
       setNamaPleton("");
@@ -116,6 +121,7 @@ export default function PletonManagemen() {
       setEmail("");
       setFoto("");
       setFotoPreview("");
+      setCategoryId("");
     }
     setIsModalOpen(true);
   };
@@ -137,6 +143,7 @@ export default function PletonManagemen() {
       bidang: bidangString,
       email: email.trim(),
       foto_url: foto,
+      category_id: categoryId ? Number(categoryId) : undefined
     };
 
     showToast("Menyimpan data...", "loading");
@@ -302,7 +309,7 @@ export default function PletonManagemen() {
                 <th className="p-3 sm:p-4 w-16 sm:w-20 text-center">No Urut</th>
                 <th className="p-3 sm:p-4">Nama Pleton</th>
                 <th className="p-3 sm:p-4 hidden sm:table-cell">Sekolah/Instansi</th>
-                <th className="p-3 sm:p-4 hidden lg:table-cell">Email PJ</th>
+                <th className="p-3 sm:p-4 hidden md:table-cell">Kategori</th>
                 <th className="p-3 sm:p-4 w-20 sm:w-28 text-center">Aksi</th>
               </tr>
             </thead>
@@ -316,6 +323,8 @@ export default function PletonManagemen() {
               ) : filteredList.length > 0 ? (
                 filteredList.map((item, idx) => {
                   const { noUrut: num, sekolah: sch } = parseBidang(item.bidang);
+                  const categoryObj = categories.find(c => c.id === item.category_id);
+                  const categoryName = categoryObj ? categoryObj.nama : "-";
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-3 sm:p-4 text-center font-semibold text-slate-400 hidden md:table-cell">{idx + 1}</td>
@@ -341,7 +350,11 @@ export default function PletonManagemen() {
                         <div className="sm:hidden text-[10px] font-semibold text-slate-400 mt-0.5">{sch}</div>
                       </td>
                       <td className="p-3 sm:p-4 font-semibold text-slate-500 hidden sm:table-cell">{sch}</td>
-                      <td className="p-3 sm:p-4 text-slate-500 text-xs hidden lg:table-cell">{item.email || "-"}</td>
+                      <td className="p-3 sm:p-4 hidden md:table-cell">
+                        <span className="px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-md text-[10px] sm:text-xs font-semibold">
+                          {categoryName}
+                        </span>
+                      </td>
                       <td className="p-3 sm:p-4">
                         <div className="flex items-center justify-center gap-1 sm:gap-2">
                           <button
@@ -463,6 +476,26 @@ export default function PletonManagemen() {
                   placeholder="Contoh: SMAN 1 KOTA TEGAL"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 sm:py-2.5 text-slate-700 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 />
+              </div>
+
+              {/* Kategori */}
+              <div>
+                <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Kategori Pleton *
+                </label>
+                <select
+                  required
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 sm:py-2.5 text-slate-700 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer"
+                >
+                  <option value="">-- Pilih Kategori --</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.nama}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Email */}

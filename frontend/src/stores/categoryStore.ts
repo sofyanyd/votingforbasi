@@ -2,9 +2,10 @@ import { create } from "zustand";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
 
-interface CategoryData {
+export interface CategoryData {
   id: number;
   nama: string;
+  deskripsi?: string;
 }
 
 interface CategoryState {

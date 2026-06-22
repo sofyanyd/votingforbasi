@@ -7,6 +7,7 @@ export interface PletonData {
   bidang: string; 
   email: string; 
   foto_url?: string;
+  category_id?: number;
 }
 
 interface PletonState {

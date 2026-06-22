@@ -30,7 +30,8 @@ export const getSpeakers = async (req, res) => {
             nama: f.nama,
             bidang: `No. ${f.no_urut} - ${f.asal_sekolah}`,
             email: "",
-            foto_url: f.foto_url
+            foto_url: f.foto_url,
+            category_id: f.category_id
         }));
         res.status(200).json(speakers);
     }
@@ -41,18 +42,18 @@ export const getSpeakers = async (req, res) => {
 // CREATE SPEAKER (Finalist)
 export const createSpeaker = async (req, res) => {
     try {
-        const { nama, bidang, foto_url } = req.body;
+        const { nama, bidang, foto_url, category_id } = req.body;
         if (!nama || !bidang) {
             return res.status(400).json({ message: "Nama dan bidang harus diisi" });
         }
         const { no_urut, asal_sekolah } = parseBidang(bidang);
-        const category_id = determineCategoryId(nama, asal_sekolah);
+        const final_category_id = category_id ? Number(category_id) : determineCategoryId(nama, asal_sekolah);
         const newFinalist = await prisma.finalists.create({
             data: {
                 nama,
                 no_urut,
                 asal_sekolah,
-                category_id,
+                category_id: final_category_id,
                 foto_url: foto_url || `https://via.placeholder.com/400x400.png?text=${encodeURIComponent(nama)}`
             }
         });
@@ -61,7 +62,8 @@ export const createSpeaker = async (req, res) => {
             nama: newFinalist.nama,
             bidang: `No. ${newFinalist.no_urut} - ${newFinalist.asal_sekolah}`,
             email: "",
-            foto_url: newFinalist.foto_url
+            foto_url: newFinalist.foto_url,
+            category_id: newFinalist.category_id
         };
         res.status(201).json(speaker);
     }
@@ -74,16 +76,16 @@ export const createSpeaker = async (req, res) => {
 export const updateSpeaker = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nama, bidang, foto_url } = req.body;
+        const { nama, bidang, foto_url, category_id } = req.body;
         const { no_urut, asal_sekolah } = parseBidang(bidang);
-        const category_id = determineCategoryId(nama, asal_sekolah);
+        const final_category_id = category_id ? Number(category_id) : determineCategoryId(nama, asal_sekolah);
         const updatedFinalist = await prisma.finalists.update({
             where: { id: Number(id) },
             data: {
                 nama,
                 no_urut,
                 asal_sekolah,
-                category_id,
+                category_id: final_category_id,
                 foto_url: foto_url !== undefined ? foto_url : undefined
             }
         });
@@ -92,7 +94,8 @@ export const updateSpeaker = async (req, res) => {
             nama: updatedFinalist.nama,
             bidang: `No. ${updatedFinalist.no_urut} - ${updatedFinalist.asal_sekolah}`,
             email: "",
-            foto_url: updatedFinalist.foto_url
+            foto_url: updatedFinalist.foto_url,
+            category_id: updatedFinalist.category_id
         };
         res.status(200).json(speaker);
     }
