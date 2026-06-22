@@ -29,7 +29,7 @@ export const Header: React.FC = () => {
         <div className="logo">
           <Link to="/beranda" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white p-1 rounded-lg flex items-center justify-center shadow-sm border border-slate-100">
-              <img src="https://forbasi.or.id/logo-forbasi.png" alt="logo" className="h-full w-full object-contain" />
+              <img src="/forbasi.png" alt="logo" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col">
                 <span className="font-black text-slate-900 leading-none tracking-tight text-lg">KEJURCAB</span>

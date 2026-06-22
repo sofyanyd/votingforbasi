@@ -8,9 +8,9 @@ export default function Footer() {
         
         {/* ── INFO BRAND & TENTANG ACARA ── */}
         <div className="md:col-span-4 lg:col-span-5 flex flex-col gap-6">
-          <Link to="/" className="flex items-center gap-3">
+          <Link to="/beranda" className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white p-1 rounded-xl flex items-center justify-center shadow-sm">
-              <img src="https://forbasi.or.id/logo-forbasi.png" alt="FORBASI" className="h-full w-full object-contain" />
+              <img src="/forbasi.png" alt="FORBASI" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="font-black text-white leading-none tracking-tight text-xl">KEJURCAB</span>

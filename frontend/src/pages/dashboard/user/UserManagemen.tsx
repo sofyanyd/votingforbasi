@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export default function UserManagemen() {
-  const { userList, addUser, updateUser, deleteUser } = useUserStore();
+  const { userList, loading, fetchUsers, addUser, updateUser, deleteUser } = useUserStore();
 
   // Search State
   const [search, setSearch] = useState("");
@@ -36,8 +36,9 @@ export default function UserManagemen() {
     type: null,
   });
 
-  // Inject font Plus Jakarta Sans
+  // Inject font Plus Jakarta Sans & Fetch users from DB
   useEffect(() => {
+    fetchUsers();
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap";
     link.rel = "stylesheet";
@@ -60,7 +61,7 @@ export default function UserManagemen() {
       setEditingId(user.id);
       setUsername(user.username);
       setEmail(user.email);
-      setPassword(user.password);
+      setPassword(""); // Clear form password, keep blank to denote "keep current password"
     } else {
       setEditingId(null);
       setUsername("");
@@ -72,15 +73,21 @@ export default function UserManagemen() {
   };
 
   // Submit Form
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!username.trim() || !email.trim() || !password.trim()) {
-      alert("Semua field wajib diisi!");
+    if (!username.trim() || !email.trim()) {
+      alert("Username dan Email wajib diisi!");
       return;
     }
 
-    if (password.length < 8) {
+    // Required for new user, optional for edit
+    if (!editingId && !password.trim()) {
+      alert("Password wajib diisi untuk user baru!");
+      return;
+    }
+
+    if (password.trim() && password.length < 8) {
       alert("Password minimal 8 karakter!");
       return;
     }
@@ -88,31 +95,48 @@ export default function UserManagemen() {
     const dataPayload = {
       username: username.trim(),
       email: email.trim().toLowerCase(),
-      password: password,
+      password: password.trim() || undefined,
     };
 
+    showToast("Menyimpan data...", "loading");
+
+    let success = false;
     if (editingId) {
-      updateUser(editingId, dataPayload);
-      showToast("User admin berhasil diperbarui!", "success");
+      success = await updateUser(editingId, dataPayload);
+      if (success) {
+        showToast("User admin berhasil diperbarui!", "success");
+      } else {
+        showToast("Gagal memperbarui user admin.", "error");
+      }
     } else {
-      addUser(dataPayload);
-      showToast("User admin berhasil ditambahkan!", "success");
+      success = await addUser(dataPayload);
+      if (success) {
+        showToast("User admin berhasil ditambahkan!", "success");
+      } else {
+        showToast("Gagal menambahkan user admin.", "error");
+      }
     }
 
-    setIsModalOpen(false);
+    if (success) {
+      setIsModalOpen(false);
+    }
   };
 
   // Delete Action
-  const handleDelete = (id: string, name: string) => {
-    // Prevent self-deletion if logged in as this user (optional client safeguard)
+  const handleDelete = async (id: string, name: string) => {
     if (userList.length <= 1) {
       alert("Tidak dapat menghapus satu-satunya user admin!");
       return;
     }
 
     if (window.confirm(`Apakah Anda yakin ingin menghapus admin "${name}"?`)) {
-      deleteUser(id);
-      showToast("User admin berhasil dihapus!", "success");
+      showToast("Menghapus user...", "loading");
+      const success = await deleteUser(id);
+      if (success) {
+        showToast("User admin berhasil dihapus!", "success");
+      } else {
+        showToast("Gagal menghapus user admin.", "error");
+      }
     }
   };
 
@@ -309,15 +333,15 @@ export default function UserManagemen() {
               {/* Password */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Password *
+                  Password {editingId ? "(Kosongkan jika tidak diubah)" : "*"}
                 </label>
                 <div className="relative">
                   <input
                     type={showFormPassword ? "text" : "password"}
-                    required
+                    required={!editingId}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimal 8 karakter"
+                    placeholder={editingId ? "Biarkan kosong untuk mempertahankan" : "Minimal 8 karakter"}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                   />
                   <button

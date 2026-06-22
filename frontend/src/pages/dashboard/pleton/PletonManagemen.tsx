@@ -307,8 +307,8 @@ export default function PletonManagemen() {
                 <th className="p-3 sm:p-4 w-10 sm:w-12 text-center hidden md:table-cell">No</th>
                 <th className="p-3 sm:p-4 w-12 sm:w-16">Foto</th>
                 <th className="p-3 sm:p-4 w-16 sm:w-20 text-center">No Urut</th>
-                <th className="p-3 sm:p-4">Nama Pleton</th>
                 <th className="p-3 sm:p-4 hidden sm:table-cell">Sekolah/Instansi</th>
+                <th className="p-3 sm:p-4">Nama Pleton</th>               
                 <th className="p-3 sm:p-4 hidden md:table-cell">Kategori</th>
                 <th className="p-3 sm:p-4 w-20 sm:w-28 text-center">Aksi</th>
               </tr>
@@ -432,17 +432,17 @@ export default function PletonManagemen() {
                 </div>
               </div>
               
-              {/* Nama Pleton */}
+              {/* Sekolah */}
               <div>
                 <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Nama Pleton *
+                  Asal Sekolah / Instansi *
                 </label>
                 <input
                   type="text"
                   required
-                  value={namaPleton}
-                  onChange={(e) => setNamaPleton(e.target.value)}
-                  placeholder="Contoh: Pleton Alpha"
+                  value={sekolah}
+                  onChange={(e) => setSekolah(e.target.value)}
+                  placeholder="Contoh: SMAN 1 KOTA TEGAL"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 sm:py-2.5 text-slate-700 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 />
               </div>
@@ -463,17 +463,17 @@ export default function PletonManagemen() {
                 />
               </div>
 
-              {/* Sekolah */}
+              {/* Nama Pleton */}
               <div>
                 <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Asal Sekolah / Instansi *
+                  Nama Pleton *
                 </label>
                 <input
                   type="text"
                   required
-                  value={sekolah}
-                  onChange={(e) => setSekolah(e.target.value)}
-                  placeholder="Contoh: SMAN 1 KOTA TEGAL"
+                  value={namaPleton}
+                  onChange={(e) => setNamaPleton(e.target.value)}
+                  placeholder="Contoh: Pleton Alpha"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 sm:py-2.5 text-slate-700 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 />
               </div>
