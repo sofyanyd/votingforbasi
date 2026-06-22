@@ -84,7 +84,7 @@ export default function Dashboard() {
 
                     {/* Visual Hero Kanan - Logo FORBASI */}
                     <div className="hidden md:flex relative w-80 h-80 bg-white rounded-[2rem] rotate-3 hover:rotate-0 transition-transform duration-500 items-center justify-center shadow-2xl border-4 border-gray-100 shrink-0">
-                        <img src="src/assets/LOGO FORBASI.png" alt="Logo FORBASI" className="w-56 h-56 object-contain" />
+                        <img src="/LOGO FORBASI.png" alt="Logo FORBASI" className="w-56 h-56 object-contain" />
                     </div>
                 </div>
             </section>
