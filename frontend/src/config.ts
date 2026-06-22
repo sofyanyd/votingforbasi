@@ -1,2 +1,2 @@
 // Central API configuration for dynamically resolving backend IP/host when testing on multiple devices.
-export const API_BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://votingforbasi-production.up.railway.app/";
