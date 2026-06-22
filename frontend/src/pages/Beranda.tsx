@@ -8,8 +8,8 @@ export default function Dashboard() {
 
     const faqItems = [
         { title: "Apa itu Voting KEJURCAB?", description: "Ini adalah platform pemungutan suara resmi untuk menentukan juara favorit pada ajang Lomba Keterampilan Baris Berbaris (LKBB) Tingkat Cabang (KEJURCAB) Tahun 2026." },
-        { title: "Bagaimana cara melakukan voting?", description: "Kamu bisa pergi ke tab 'Finalis', pilih pleton jagoanmu, lalu klik tombol 'Vote'. Pastikan kamu sudah memiliki tiket/kuota vote yang valid." },
-        { title: "Apakah satu akun bisa vote berkali-kali?", description: "Sistem voting diatur sesuai dengan kebijakan panitia. Biasanya, satu tiket/kuota berlaku untuk satu kali vote." },
+        { title: "Bagaimana cara melakukan voting?", description: "Kamu bisa pergi ke tab 'Dukungan' lalu 'BELI TIKET VOTE', pilih pleton jagoanmu, lalu klik tombol 'Vote'. Pastikan kamu sudah memiliki tiket/kuota vote yang valid." },
+        { title: "Apakah satu akun bisa vote berkali-kali?", description: "Sistem voting diatur sesuai dengan kebijakan panitia." },
         { title: "Kapan periode voting ditutup?", description: "Voting akan ditutup secara otomatis pada hari puncak pelaksanaan. Pastikan kamu memberikan dukungan sebelum waktu habis!" },
         { title: "Bagaimana cara melihat siapa yang memimpin?", description: "Kamu bisa memantau perolehan suara sementara secara real-time melalui menu 'Leaderboard' di bagian atas halaman." },
     ];
@@ -17,9 +17,9 @@ export default function Dashboard() {
     // ── DATA TATA CARA VOTING ──
     const votingSteps = [
         {
-            title: "Temukan Finalis Favoritmu",
-            desc: `Jelajahi daftar seluruh peserta LKBB di halaman Finalis. Lihat profil, asal sekolah, dan nomor urut mereka untuk memastikan kamu tidak salah pilih.`,
-            btnLabel: "LIHAT FINALIS",
+            title: "Temukan Peserta Favoritmu",
+            desc: `Jelajahi daftar seluruh peserta LKBB di halaman Peserta. Lihat profil, asal sekolah, dan nomor urut mereka untuk memastikan kamu tidak salah pilih.`,
+            btnLabel: "LIHAT PESERTA",
             link: "/peserta",
             bg: "white",
             icon: Award

@@ -76,7 +76,7 @@ export default function Peserta() {
           </h1>
           
           <p className="text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto mb-10">
-            Kenali seluruh pleton tangguh yang akan bertanding memperebutkan piala bergilir dan gelar Juara Favorit di KEJURCAB. Tentukan jagoanmu dari sekarang!
+            Kenali seluruh pleton tangguh yang akan bertanding memperebutkan piala dan gelar Juara Favorit di KEJURCAB 2026. Tentukan jagoanmu dari sekarang!
           </p>
           
           <div className="flex flex-wrap items-center justify-center gap-4">
@@ -90,9 +90,9 @@ export default function Peserta() {
       <section className="max-w-5xl mx-auto px-6 -mt-8 relative z-20 mb-16">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-2 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
           {[
-            { icon: Calendar, title: "Tanggal", val: "26 Okt 2026" },
-            { icon: Clock, title: "Waktu", val: "07.00 WIB" },
-            { icon: MapPin, title: "Lokasi", val: "Lapangan Utama" },
+            { icon: Calendar, title: "Tanggal", val: "12 Juli 2026" },
+            { icon: Clock, title: "Waktu", val: "08.00 WIB" },
+            { icon: MapPin, title: "Lokasi", val: "Lapangan Universitas BSI Kampus Tegal" },
             { icon: CheckCircle, title: "Juara", val: "16.00 WIB" },
           ].map((item, i) => (
             <div key={i} className="flex-1 flex items-center justify-center gap-4 p-4 hover:bg-slate-50 transition-colors rounded-xl md:rounded-none first:rounded-t-xl md:first:rounded-l-xl md:first:rounded-tr-none last:rounded-b-xl md:last:rounded-r-xl md:last:rounded-bl-none">
