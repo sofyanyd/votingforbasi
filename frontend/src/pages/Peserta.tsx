@@ -66,22 +66,25 @@ export default function Peserta() {
         {/* Dekorasi Background */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-full bg-emerald-50 rounded-full blur-3xl opacity-40 pointer-events-none"></div>
         
-        <div className="max-w-4xl mx-auto px-6 py-24 text-center relative z-10">
+        {/* UBAH: Padding disesuaikan untuk HP (py-16) dan Desktop (md:py-24) */}
+        <div className="max-w-4xl mx-auto px-6 py-16 md:py-24 text-center relative z-10">
           <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-6 border border-emerald-100">
             <Sparkles size={16} className="text-emerald-500" /> KANDIDAT JUARA
           </div>
           
-          <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-6">
+          {/* UBAH: text-5xl diturunkan ke text-4xl untuk HP, baru naik ke 5xl di tablet/desktop */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight mb-6">
             Galeri <span className="text-emerald-600">Peserta</span>
           </h1>
           
-          <p className="text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto mb-10">
+          <p className="text-base md:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto mb-10">
             Kenali seluruh pleton tangguh yang akan bertanding memperebutkan piala dan gelar Juara Favorit di KEJURCAB 2026. Tentukan jagoanmu dari sekarang!
           </p>
           
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Button label="LIHAT LEADERBOARD" variant="primary" onClick={() => navigate("/leaderboard")} />
-            <Button label="BERIKAN DUKUNGAN" variant="outline" onClick={() => navigate("/dukungan")} />
+          {/* UBAH: flex-wrap diganti flex-col di HP agar tombolnya full-width dan gampang dipencet */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto sm:max-w-none">
+            <Button className="w-full sm:w-auto" label="LIHAT LEADERBOARD" variant="primary" onClick={() => navigate("/leaderboard")} />
+            <Button className="w-full sm:w-auto" label="BERIKAN DUKUNGAN" variant="outline" onClick={() => navigate("/dukungan")} />
           </div>
         </div>
       </section>
@@ -95,14 +98,19 @@ export default function Peserta() {
             { icon: MapPin, title: "Lokasi", val: "Lapangan Universitas BSI Kampus Tegal" },
             { icon: CheckCircle, title: "Juara", val: "16.00 WIB" },
           ].map((item, i) => (
-            <div key={i} className="flex-1 flex items-center justify-center gap-4 p-4 hover:bg-slate-50 transition-colors rounded-xl md:rounded-none first:rounded-t-xl md:first:rounded-l-xl md:first:rounded-tr-none last:rounded-b-xl md:last:rounded-r-xl md:last:rounded-bl-none">
+            // UBAH PADA BARIS DI BAWAH INI: 
+            // Dari justify-center menjadi: justify-start px-8 py-5 md:justify-center md:px-4
+            <div key={i} className="flex-1 flex items-center justify-start px-8 py-5 md:justify-center md:px-4 hover:bg-slate-50 transition-colors rounded-xl md:rounded-none first:rounded-t-xl md:first:rounded-l-xl md:first:rounded-tr-none last:rounded-b-xl md:last:rounded-r-xl md:last:rounded-bl-none">
+              
               <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
                 <item.icon size={20} />
               </div>
               <div className="text-left">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.title}</p>
-                <h4 className="font-bold text-slate-900 text-sm">{item.val}</h4>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{item.title}</p>
+                {/* Tambahan leading-snug agar kalau teks lokasi turun ke baris bawah, jarak spasinya pas */}
+                <h4 className="font-bold text-slate-900 text-sm md:text-base leading-snug pr-4">{item.val}</h4>
               </div>
+
             </div>
           ))}
         </div>
@@ -110,12 +118,13 @@ export default function Peserta() {
 
       {/* ── 3. GRID PESERTA ── */}
       <section className="max-w-7xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-10 border-b border-slate-200 pb-4">
+        {/* UBAH: flex-row diubah jadi flex-col untuk HP, agar judul dan badge nggak saling gencet */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10 border-b border-slate-200 pb-4">
           <div className="flex items-center gap-3">
-            <Users className="text-emerald-600" size={28} />
+            <Users className="text-emerald-600 shrink-0" size={28} />
             <h2 className="text-2xl md:text-3xl font-black text-slate-900">Daftar Pleton</h2>
           </div>
-          <span className="bg-slate-200 text-slate-600 text-xs font-black px-3 py-1 rounded-md uppercase tracking-widest">
+          <span className="bg-slate-200 text-slate-600 text-xs font-black px-3 py-1 rounded-md uppercase tracking-widest self-start sm:self-auto">
             {finalists.length} Peserta
           </span>
         </div>
@@ -160,6 +169,7 @@ export default function Peserta() {
       </section>
 
       {/* ── 4. FAQ SECTION (SPLIT LAYOUT) ── */}
+      {/* Kodingan ini juga aman, otomatis numpuk di HP berkat lg:col-span-1 */}
       <section className="max-w-6xl mx-auto px-6 py-20 mt-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
           <div className="lg:col-span-1 sticky top-24">

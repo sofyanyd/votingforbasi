@@ -13,32 +13,35 @@ export default function Dukungan() {
         {/* Dekorasi Background */}
         <div className="absolute top-0 left-0 w-full h-full bg-emerald-50 blur-3xl opacity-40 pointer-events-none"></div>
 
-        <div className="max-w-6xl mx-auto px-6 py-24 flex flex-col md:flex-row items-center gap-12 relative z-10">
-          <div className="flex-1 space-y-6">
+        {/* UBAH: Padding vertikal jadi py-12 di HP, rata tengah (text-center) di HP */}
+        <div className="max-w-6xl mx-auto px-6 py-12 md:py-24 flex flex-col md:flex-row items-center text-center md:text-left gap-8 md:gap-12 relative z-10">
+          <div className="flex-1 space-y-5 md:space-y-6 flex flex-col items-center md:items-start">
             <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest border border-emerald-100">
               <Sparkles size={16} className="text-emerald-500" /> Official Ticketing
             </div>
             
-            <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">
+            {/* UBAH: Ukuran font disesuaikan agar tidak terpotong aneh di HP kecil */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">
               Berikan <span className="text-emerald-600">Dukunganmu</span>
             </h1>
 
-            <h2 className="text-xl md:text-2xl text-slate-700 font-bold">
+            <h2 className="text-lg md:text-2xl text-slate-700 font-bold">
               Bantu Pleton Jagoanmu Meraih Gelar Juara Favorit!
             </h2>
 
-            <p className="text-lg text-slate-500 leading-relaxed max-w-lg mb-8">
+            <p className="text-base md:text-lg text-slate-500 leading-relaxed max-w-lg mb-4 md:mb-8">
               Dukungan dari kamu sangat berarti bagi para finalis. Beli tiket voting resmi dengan mudah layaknya berbelanja online. Pilih peserta favoritmu, tentukan jumlah suaranya, dan jadikan mereka juara!
             </p>
 
-            <div className="pt-2">
+            {/* UBAH: Bungkus tombol dengan w-full di HP agar lebarnya membentang */}
+            <div className="pt-2 w-full sm:w-auto">
               <Button 
                 variant="primary" 
-                onClick={() => navigate("/catalogvote")} // Sesuaikan path ini dengan router kamu
-                className="flex items-center justify-center gap-2 shadow-emerald-200 shadow-lg"
+                onClick={() => navigate("/catalogvote")}
+                className="w-full flex items-center justify-center gap-2 shadow-emerald-200 shadow-lg py-3.5"
               >
                 <Ticket size={20} />
-                BELI TIKET VOTE SEKARANG
+                BELI TIKET VOTE
               </Button>
             </div>
           </div>
@@ -51,12 +54,13 @@ export default function Dukungan() {
       </section>
 
       {/* ── 2. ABOUT SECTION ── */}
-      <section className="py-20 px-6 text-center max-w-4xl mx-auto -mt-8 relative z-20">
-        <div className="bg-white rounded-3xl shadow-lg border border-slate-100 p-10 md:p-16">
-            <h2 className="text-3xl font-black text-slate-900 mb-6">
+      <section className="py-12 md:py-20 px-6 text-center max-w-4xl mx-auto md:-mt-8 relative z-20">
+        {/* UBAH: Padding dalam (p-6) di HP supaya teks punya ruang bernapas */}
+        <div className="bg-white rounded-3xl shadow-lg border border-slate-100 p-6 sm:p-10 md:p-16">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 md:mb-6">
               Sistem <span className="text-emerald-600">Voting Terbuka</span>
             </h2>
-            <p className="text-slate-500 leading-relaxed text-lg">
+            <p className="text-slate-500 leading-relaxed text-sm md:text-lg">
               Kategori <strong className="text-slate-800">Juara Favorit</strong> sepenuhnya ditentukan oleh besarnya antusiasme dan dukungan dari suporter, alumni, maupun masyarakat umum. Dengan sistem pembelian tiket vote ini, kami menjamin keamanan data dan transparansi penuh dalam setiap langkah.
             </p>
         </div>

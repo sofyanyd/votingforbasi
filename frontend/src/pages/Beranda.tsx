@@ -46,10 +46,12 @@ export default function Dashboard() {
         <div className="bg-gray-50 font-sans min-h-screen pb-20">
             
             {/* ── 1. HERO SECTION (HIJAU EMERALD) ── */}
-            <section className="bg-white border-b border-gray-100 rounded-b-[40px] shadow-sm overflow-hidden h-screen max-h-[700px] flex items-center relative z-10">
-                <div className="w-full flex flex-col md:flex-row items-center justify-between px-6 md:px-12 lg:px-20 max-w-7xl mx-auto gap-8">
+            {/* UBAH: Hapus h-screen paten, ganti jadi min-h-[500px] dan py-12 agar bisa menyesuaikan panjang konten di HP */}
+            <section className="bg-white border-b border-gray-100 rounded-b-[40px] shadow-sm overflow-hidden min-h-[500px] lg:h-screen lg:max-h-[700px] flex items-center relative z-10 py-12 lg:py-0">
+                {/* UBAH: Hapus flex-row, ganti jadi flex-col-reverse untuk HP (biar kalau ada gambar di HP, teksnya di bawah gambar, tapi karena gambarnya di-hidden di HP, ini jadi flex-col biasa) */}
+                <div className="w-full flex flex-col lg:flex-row items-center justify-between px-6 md:px-12 lg:px-20 max-w-7xl mx-auto gap-8">
                     
-                    <div className="max-w-xl w-full">
+                    <div className="max-w-xl w-full text-center lg:text-left"> {/* Tambah text-center untuk HP */}
                         <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1 rounded-full font-bold text-xs uppercase tracking-widest mb-4">
                             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
                             Platform Voting Resmi
@@ -59,22 +61,22 @@ export default function Dashboard() {
                             Dukung Pleton Favoritmu di <span className="text-emerald-600">KEJURCAB</span>
                         </h1>
                         
-                        <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-8 max-w-xl">
+                        <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
                             Mari sukseskan LKBB Tahun 2026. Satu suaramu sangat berharga untuk menentukan siapa yang berhak membawa pulang piala Juara Favorit!
                         </p>
                         
-                        {/* ── MENGGUNAKAN COMPONENT BUTTON ── */}
-                        <div className="flex flex-row items-center gap-3">
+                        {/* UBAH: Dari flex-row menjadi flex-col di HP, lalu jadi flex-row lagi di md (Tablet/Desktop) */}
+                        <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
                             <Button 
                                 variant="primary" 
-                                className="flex items-center justify-center gap-2 whitespace-nowrap" 
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap" 
                                 onClick={() => navigate("/dukungan")}
                             >
                                 <Vote size={18} /> VOTE SEKARANG
                             </Button>
                             <Button 
                                 variant="outline" 
-                                className="flex items-center justify-center gap-2 whitespace-nowrap" 
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap" 
                                 onClick={() => navigate("/leaderboard")}
                             >
                                 <TrendingUp size={18} /> CEK KLASEMEN
@@ -83,7 +85,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Visual Hero Kanan - Logo FORBASI */}
-                    <div className="hidden md:flex relative w-80 h-80 bg-white rounded-[2rem] rotate-3 hover:rotate-0 transition-transform duration-500 items-center justify-center shadow-2xl border-4 border-gray-100 shrink-0">
+                    <div className="hidden lg:flex relative w-80 h-80 bg-white rounded-[2rem] rotate-3 hover:rotate-0 transition-transform duration-500 items-center justify-center shadow-2xl border-4 border-gray-100 shrink-0">
                         <img src="/LOGO FORBASI.png" alt="Logo FORBASI" className="w-56 h-56 object-contain" />
                     </div>
                 </div>
