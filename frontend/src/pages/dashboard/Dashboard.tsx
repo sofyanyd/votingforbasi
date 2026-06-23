@@ -28,8 +28,12 @@ export default function Dashboard() {
         
         setTotalPleton(speakersRes.data.length);
         
-        const votesSum = txRes.data.reduce((sum: number, tx: any) => sum + (tx.votesCount || 0), 0);
-        const financeSum = txRes.data.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
+        const votesSum = txRes.data
+          .filter((tx: any) => tx.status === "Lunas")
+          .reduce((sum: number, tx: any) => sum + (tx.votesCount || 0), 0);
+        const financeSum = txRes.data
+          .filter((tx: any) => tx.status === "Lunas")
+          .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
         
         setTotalVotes(votesSum);
         setTotalFinance(financeSum);

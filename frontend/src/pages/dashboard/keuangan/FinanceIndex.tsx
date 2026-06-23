@@ -140,17 +140,19 @@ export default function FinanceIndex() {
     );
   });
 
-  // Calculations for Stats
+  // Calculations for Stats (only sum successful "Lunas" transactions)
   const totalKeuangan = filteredTransactions
+    .filter((tx) => tx.status === "Lunas")
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const totalVotes = filteredTransactions
+    .filter((tx) => tx.status === "Lunas")
     .reduce((sum, tx) => sum + tx.votesCount, 0);
 
   // Aggregate member reports based on filtered success transactions
   const memberReport = pletonList.map((pleton) => {
     const clubVotes = filteredTransactions
-      .filter((tx) => tx.namaKlub.toLowerCase() === pleton.nama.toLowerCase())
+      .filter((tx) => tx.status === "Lunas" && tx.namaKlub.toLowerCase() === pleton.nama.toLowerCase())
       .reduce((sum, tx) => sum + tx.votesCount, 0);
 
     const { sekolah } = parseBidang(pleton.bidang);
@@ -387,7 +389,9 @@ export default function FinanceIndex() {
             <FileText size={22} />
           </div>
           <div>
-            <div className="text-xl font-extrabold tracking-tight">{filteredTransactions.length}</div>
+            <div className="text-xl font-extrabold tracking-tight">
+              {filteredTransactions.filter((tx) => tx.status === "Lunas").length}
+            </div>
             <div className="text-xs font-semibold text-slate-400 mt-0.5">Total Transaksi Lunas</div>
           </div>
         </div>

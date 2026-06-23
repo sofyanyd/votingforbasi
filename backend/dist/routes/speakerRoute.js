@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { getSpeakers, createSpeaker, updateSpeaker, deleteSpeaker, } from "../controllers/speakerController.js";
+import { requireAdmin } from "../middleware/auth.js";
 const router = Router();
 router.get("/", getSpeakers);
-router.post("/", createSpeaker);
-router.put("/:id", updateSpeaker);
-router.delete("/:id", deleteSpeaker);
+router.post("/", requireAdmin, createSpeaker);
+router.put("/:id", requireAdmin, updateSpeaker);
+router.delete("/:id", requireAdmin, deleteSpeaker);
 export default router;

@@ -14,7 +14,6 @@ export default function Dashboard() {
         { title: "Bagaimana cara melihat siapa yang memimpin?", description: "Kamu bisa memantau perolehan suara sementara secara real-time melalui menu 'Leaderboard' di bagian atas halaman." },
     ];
 
-    // ── DATA TATA CARA VOTING ──
     const votingSteps = [
         {
             title: "Temukan Peserta Favoritmu",
@@ -45,27 +44,41 @@ export default function Dashboard() {
     return (
         <div className="bg-gray-50 font-sans min-h-screen pb-20">
             
-            {/* ── 1. HERO SECTION (HIJAU EMERALD) ── */}
-            {/* UBAH: Hapus h-screen paten, ganti jadi min-h-[500px] dan py-12 agar bisa menyesuaikan panjang konten di HP */}
+            {/* Konfigurasi Custom Animation untuk efek Shine */}
+            <style>
+                {`
+                @keyframes shine {
+                    0% { background-position: -200% center; }
+                    100% { background-position: 200% center; }
+                }
+                .animate-shine {
+                    background-size: 200% auto;
+                    animation: shine 3s linear infinite;
+                }
+                `}
+            </style>
+
             <section className="bg-white border-b border-gray-100 rounded-b-[40px] shadow-sm overflow-hidden min-h-[500px] lg:h-screen lg:max-h-[700px] flex items-center relative z-10 py-12 lg:py-0">
-                {/* UBAH: Hapus flex-row, ganti jadi flex-col-reverse untuk HP (biar kalau ada gambar di HP, teksnya di bawah gambar, tapi karena gambarnya di-hidden di HP, ini jadi flex-col biasa) */}
                 <div className="w-full flex flex-col lg:flex-row items-center justify-between px-6 md:px-12 lg:px-20 max-w-7xl mx-auto gap-8">
                     
-                    <div className="max-w-xl w-full text-center lg:text-left"> {/* Tambah text-center untuk HP */}
+                    <div className="max-w-xl w-full text-center lg:text-left">
                         <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1 rounded-full font-bold text-xs uppercase tracking-widest mb-4">
                             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
                             Platform Voting Resmi
                         </div>
                         
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-4 leading-tight tracking-tight">
-                            Dukung Pleton Favoritmu di <span className="text-emerald-600">KEJURCAB</span>
+                            Dukung Pleton Favoritmu di <br className="hidden lg:block"/>
+                            {/* EFEK SHINE DI SINI */}
+                            <span className="animate-shine bg-gradient-to-r from-emerald-600 via-emerald-300 to-emerald-600 bg-clip-text text-transparent drop-shadow-sm">
+                                KEJURCAB
+                            </span>
                         </h1>
                         
                         <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
                             Mari sukseskan LKBB Tahun 2026. Satu suaramu sangat berharga untuk menentukan siapa yang berhak membawa pulang piala Juara Favorit!
                         </p>
                         
-                        {/* UBAH: Dari flex-row menjadi flex-col di HP, lalu jadi flex-row lagi di md (Tablet/Desktop) */}
                         <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
                             <Button 
                                 variant="primary" 
@@ -84,14 +97,12 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Visual Hero Kanan - Logo FORBASI */}
                     <div className="hidden lg:flex relative w-80 h-80 bg-white rounded-[2rem] rotate-3 hover:rotate-0 transition-transform duration-500 items-center justify-center shadow-2xl border-4 border-gray-100 shrink-0">
                         <img src="/LOGO FORBASI.png" alt="Logo FORBASI" className="w-56 h-56 object-contain" />
                     </div>
                 </div>
             </section>
 
-            {/* ── 2. TATA CARA VOTING ── */}
             <section className="py-20 px-6 max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <p className="text-emerald-600 font-bold tracking-widest text-xs uppercase mb-2">Panduan</p>
@@ -107,7 +118,6 @@ export default function Dashboard() {
                                 <Icon size={32} className="mb-4" />
                                 <h3 className="text-lg font-black mb-2">{step.title}</h3>
                                 <p className={`text-sm mb-6 ${isEmerald ? 'text-emerald-100' : 'text-gray-500'}`}>{step.desc}</p>
-                                {/* Tombol di sini tetap menggunakan Link karena warnanya dinamis menyesuaikan kartu */}
                                 <Link to={step.link} className={`text-xs font-bold px-4 py-3 rounded-lg block text-center ${isEmerald ? 'bg-white text-emerald-600' : 'bg-emerald-50 text-emerald-600'}`}>
                                     {step.btnLabel}
                                 </Link>
@@ -117,7 +127,6 @@ export default function Dashboard() {
                 </div>
             </section>
 
-            {/* ── 3. FAQ ── */}
             <section className="py-10 px-6 max-w-4xl mx-auto">
                 <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
                     <h2 className="text-2xl font-black text-center mb-8">Pertanyaan Seputar Voting</h2>
@@ -129,3 +138,4 @@ export default function Dashboard() {
         </div>
     );
 }
+

@@ -1,24 +1,40 @@
 import { Request, Response } from "express";
+import prisma from "../lib/prisma.js";
 
-// In-memory events to prevent database crashes since event is not in forbasi.sql
-let inMemoryEvents = [
-  {
-    id: 1,
-    nama: "LKBB KEJURCAB Tegal 2026",
-    lokasi: "Stadion Utama Tegal",
-    tanggal: "2026-10-26T00:00:00.000Z",
-    deskripsi: "Kompetisi baris berbaris tingkat cabang se-Tegal.",
-    categoryId: 1,
-    pembicaraId: 1,
-    category: { nama: "SMP Sederajat" },
-    pembicara: { nama: "SMP N 2 Tegal", bidang: "No. 01 - SMP N 2 Tegal" }
-  }
-];
-
+// GET ALL EVENTS (from PostgreSQL DB)
 export const getEvents = async (req: Request, res: Response) => {
-  res.status(200).json(inMemoryEvents);
+  try {
+    const events = await prisma.events.findMany({
+      include: {
+        categories: true,
+        finalists: true
+      },
+      orderBy: {
+        id: "asc"
+      }
+    });
+
+    // Map to frontend expected Event format
+    const mapped = events.map(e => ({
+      id: e.id,
+      nama: e.nama,
+      lokasi: e.lokasi,
+      tanggal: e.tanggal,
+      deskripsi: e.deskripsi || "",
+      categoryId: e.category_id,
+      pembicaraId: e.pembicara_id,
+      category: { nama: e.categories.nama },
+      pembicara: { nama: e.finalists.nama, bidang: `No. ${e.finalists.no_urut} - ${e.finalists.asal_sekolah}` }
+    }));
+
+    res.status(200).json(mapped);
+  } catch (error: any) {
+    console.error("Gagal mengambil data event:", error);
+    res.status(500).json({ message: "Gagal memuat data event", error });
+  }
 };
 
+// CREATE EVENT (in PostgreSQL DB)
 export const createEvent = async (req: Request, res: Response) => {
   try {
     const { nama, lokasi, tanggal, deskripsi, categoryId, pembicaraId } = req.body;
@@ -26,56 +42,92 @@ export const createEvent = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Data wajib diisi semua!" });
     }
 
-    const newEvent = {
-      id: inMemoryEvents.length > 0 ? Math.max(...inMemoryEvents.map(e => e.id)) + 1 : 1,
-      nama,
-      lokasi,
-      tanggal: new Date(tanggal).toISOString(),
-      deskripsi: deskripsi || "",
-      categoryId: Number(categoryId),
-      pembicaraId: Number(pembicaraId),
-      category: { nama: Number(categoryId) === 1 ? "SMP Sederajat" : "SMA/SMK/MA Sederajat" },
-      pembicara: { nama: "Pleton Terpilih", bidang: "No. 01 - Pleton Terpilih" }
+    const newEvent = await prisma.events.create({
+      data: {
+        nama,
+        lokasi,
+        tanggal: new Date(tanggal),
+        deskripsi: deskripsi || "",
+        category_id: Number(categoryId),
+        pembicara_id: Number(pembicaraId)
+      },
+      include: {
+        categories: true,
+        finalists: true
+      }
+    });
+
+    const mapped = {
+      id: newEvent.id,
+      nama: newEvent.nama,
+      lokasi: newEvent.lokasi,
+      tanggal: newEvent.tanggal,
+      deskripsi: newEvent.deskripsi || "",
+      categoryId: newEvent.category_id,
+      pembicaraId: newEvent.pembicara_id,
+      category: { nama: newEvent.categories.nama },
+      pembicara: { nama: newEvent.finalists.nama, bidang: `No. ${newEvent.finalists.no_urut} - ${newEvent.finalists.asal_sekolah}` }
     };
-    inMemoryEvents.push(newEvent);
-    res.status(201).json(newEvent);
-  } catch (error) {
+
+    res.status(201).json(mapped);
+  } catch (error: any) {
+    console.error("Gagal membuat event:", error);
     res.status(500).json({ message: "Gagal membuat event", error });
   }
 };
 
+// UPDATE EVENT (in PostgreSQL DB)
 export const updateEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { nama, lokasi, tanggal, deskripsi, categoryId, pembicaraId } = req.body;
 
-    const eventIndex = inMemoryEvents.findIndex(e => e.id === Number(id));
-    if (eventIndex === -1) {
-      return res.status(404).json({ message: "Event tidak ditemukan" });
-    }
+    const data: any = {};
+    if (nama) data.nama = nama;
+    if (lokasi) data.lokasi = lokasi;
+    if (tanggal) data.tanggal = new Date(tanggal);
+    if (deskripsi !== undefined) data.deskripsi = deskripsi;
+    if (categoryId) data.category_id = Number(categoryId);
+    if (pembicaraId) data.pembicara_id = Number(pembicaraId);
 
-    const updatedEvent = {
-      ...inMemoryEvents[eventIndex],
-      nama: nama || inMemoryEvents[eventIndex].nama,
-      lokasi: lokasi || inMemoryEvents[eventIndex].lokasi,
-      tanggal: tanggal ? new Date(tanggal).toISOString() : inMemoryEvents[eventIndex].tanggal,
-      deskripsi: deskripsi || inMemoryEvents[eventIndex].deskripsi,
-      categoryId: categoryId ? Number(categoryId) : inMemoryEvents[eventIndex].categoryId,
-      pembicaraId: pembicaraId ? Number(pembicaraId) : inMemoryEvents[eventIndex].pembicaraId,
+    const updatedEvent = await prisma.events.update({
+      where: { id: Number(id) },
+      data,
+      include: {
+        categories: true,
+        finalists: true
+      }
+    });
+
+    const mapped = {
+      id: updatedEvent.id,
+      nama: updatedEvent.nama,
+      lokasi: updatedEvent.lokasi,
+      tanggal: updatedEvent.tanggal,
+      deskripsi: updatedEvent.deskripsi || "",
+      categoryId: updatedEvent.category_id,
+      pembicaraId: updatedEvent.pembicara_id,
+      category: { nama: updatedEvent.categories.nama },
+      pembicara: { nama: updatedEvent.finalists.nama, bidang: `No. ${updatedEvent.finalists.no_urut} - ${updatedEvent.finalists.asal_sekolah}` }
     };
-    inMemoryEvents[eventIndex] = updatedEvent;
-    res.status(200).json(updatedEvent);
-  } catch (error) {
+
+    res.status(200).json(mapped);
+  } catch (error: any) {
+    console.error("Gagal memperbarui event:", error);
     res.status(500).json({ message: "Gagal memperbarui event", error });
   }
 };
 
+// DELETE EVENT (from PostgreSQL DB)
 export const deleteEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    inMemoryEvents = inMemoryEvents.filter(e => e.id !== Number(id));
+    await prisma.events.delete({
+      where: { id: Number(id) }
+    });
     res.status(200).json({ message: "Event berhasil dihapus" });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Gagal menghapus event:", error);
     res.status(500).json({ message: "Gagal menghapus event", error });
   }
 };
