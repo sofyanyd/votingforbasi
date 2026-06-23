@@ -23,9 +23,23 @@ const determineCategoryId = (nama: string, asal_sekolah: string): number => {
   return 2; // SMA/SMK/MA Sederajat
 };
 
+let speakersCache: any = null;
+let speakersCacheTime = 0;
+
+export const clearSpeakersCache = () => {
+  speakersCache = null;
+  speakersCacheTime = 0;
+};
+
 // GET ALL SPEAKERS (Finalists)
 export const getSpeakers = async (req: Request, res: Response) => {
   try {
+    const now = Date.now();
+    // Cache for 10 seconds
+    if (speakersCache && (now - speakersCacheTime < 10000)) {
+      return res.status(200).json(speakersCache);
+    }
+
     const finalists = await prisma.finalists.findMany({
       orderBy: { id: "asc" }
     });
@@ -40,6 +54,9 @@ export const getSpeakers = async (req: Request, res: Response) => {
       category_id: f.category_id
     }));
     
+    speakersCache = speakers;
+    speakersCacheTime = now;
+
     res.status(200).json(speakers);
   } catch (error) {
     res.status(500).json({ message: "Gagal mengambil data pembicara/finalis", error });
@@ -76,6 +93,7 @@ export const createSpeaker = async (req: Request, res: Response) => {
       category_id: newFinalist.category_id
     };
     
+    clearSpeakersCache();
     res.status(201).json(speaker);
   } catch (error) {
     console.error("Gagal membuat finalist:", error);
@@ -112,6 +130,7 @@ export const updateSpeaker = async (req: Request, res: Response) => {
       category_id: updatedFinalist.category_id
     };
     
+    clearSpeakersCache();
     res.status(200).json(speaker);
   } catch (error) {
     res.status(500).json({ message: "Gagal memperbarui peserta", error });
@@ -123,6 +142,7 @@ export const deleteSpeaker = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.finalists.delete({ where: { id: Number(id) } });
+    clearSpeakersCache();
     res.status(200).json({ message: "Peserta berhasil dihapus" });
   } catch (error) {
     res.status(500).json({ message: "Gagal menghapus peserta", error });

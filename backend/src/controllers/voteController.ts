@@ -2,9 +2,23 @@ import { Request, Response } from "express";
 import crypto from "crypto";
 import prisma from "../lib/prisma.js";
 
+let leaderboardCache: any = null;
+let leaderboardCacheTime = 0;
+
+export const clearLeaderboardCache = () => {
+  leaderboardCache = null;
+  leaderboardCacheTime = 0;
+};
+
 // GET LEADERBOARD STANDINGS
 export const getLeaderboard = async (req: Request, res: Response) => {
   try {
+    const now = Date.now();
+    // Cache for 5 seconds
+    if (leaderboardCache && (now - leaderboardCacheTime < 5000)) {
+      return res.status(200).json(leaderboardCache);
+    }
+
     const finalists = await prisma.finalists.findMany({
       include: {
         votes: true
@@ -33,6 +47,9 @@ export const getLeaderboard = async (req: Request, res: Response) => {
       ...item,
       rank: idx + 1
     }));
+
+    leaderboardCache = standingsWithRank;
+    leaderboardCacheTime = now;
 
     res.status(200).json(standingsWithRank);
   } catch (error) {
@@ -317,6 +334,7 @@ export const completePayment = async (paymentCode: string) => {
     }
 
     console.log(`Payment code ${paymentCode} completed successfully. Casted votes.`);
+    clearLeaderboardCache();
     return { success: true, count: transactions.length };
   });
 };

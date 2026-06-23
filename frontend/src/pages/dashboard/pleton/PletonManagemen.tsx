@@ -409,26 +409,45 @@ export default function PletonManagemen() {
             <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto max-h-[calc(100vh-200px)]">
               
               {/* Photo Upload Section */}
-              <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white border border-slate-250 flex items-center justify-center shrink-0 relative">
-                  {fotoPreview ? (
-                    <img src={fotoPreview} alt="Preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageIcon className="text-slate-350 w-8 h-8" />
-                  )}
+              <div className="flex flex-col gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white border border-slate-250 flex items-center justify-center shrink-0 relative">
+                    {fotoPreview ? (
+                      <img src={fotoPreview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="text-slate-350 w-8 h-8" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <span className="block text-xs font-bold text-slate-500 mb-1">FOTO PLETON</span>
+                    <label className="inline-block py-1.5 px-3 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:border-emerald-500 hover:text-[#00a54f] cursor-pointer transition-colors shadow-sm">
+                      Pilih File Gambar
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="block text-[10px] text-slate-400 mt-1">Format JPG/PNG, maks. 2MB.</span>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <span className="block text-xs font-bold text-slate-500 mb-1">FOTO PLETON</span>
-                  <label className="inline-block py-1.5 px-3 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:border-emerald-500 hover:text-[#00a54f] cursor-pointer transition-colors shadow-sm">
-                    Pilih File Gambar
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoChange}
-                      className="hidden"
-                    />
+                
+                <div className="border-t border-slate-200/60 pt-3">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Atau Tempel URL Gambar
                   </label>
-                  <span className="block text-[10px] text-slate-400 mt-1">Format JPG/PNG, maks. 2MB.</span>
+                  <input
+                    type="url"
+                    value={foto.startsWith("data:") ? "" : foto}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFoto(val);
+                      setFotoPreview(val);
+                    }}
+                    placeholder="Contoh: https://i.imgur.com/abcdef.png"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                  />
                 </div>
               </div>
               
