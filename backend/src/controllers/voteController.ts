@@ -124,7 +124,7 @@ export const submitVotes = async (req: Request, res: Response) => {
             code: txCode,
             finalist_id: finalistId,
             votes_count: qty,
-            amount: qty * 2000,
+            amount: qty * 5000,
             voter_email: "guest@forbasi.com",
             status: "Lunas"
           }
@@ -187,7 +187,7 @@ export const requestPayment = async (req: Request, res: Response) => {
     for (const item of cart) {
       const finalistId = Number(item.id);
       const qty = Number(item.qty);
-      const amount = qty * 2000; // Rp 2.000 / vote
+      const amount = qty * 5000; // Rp 5.000 / vote
       totalAmount += amount;
 
       const uniqueTxCode = `TX-${finalistId}-${paymentCode}`;

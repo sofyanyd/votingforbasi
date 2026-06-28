@@ -161,7 +161,7 @@ export default function FinanceIndex() {
       name: pleton.nama,
       school: sekolah,
       votes: clubVotes,
-      amount: clubVotes * 2000,
+      amount: clubVotes * 5000,
       status: "Aktif",
     };
   });

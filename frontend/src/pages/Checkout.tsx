@@ -22,7 +22,7 @@ export default function Checkout() {
         setSuccess(true);
         setTimeout(() => {
           navigate("/leaderboard");
-        }, 2000);
+        }, 5000);
       }
     } catch (error) {
       console.error("Gagal memproses pembayaran:", error);
