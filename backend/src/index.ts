@@ -6,6 +6,7 @@ import speakerRoute from "./routes/speakerRoute.js";
 import eventRoute from "./routes/eventRoute.js";    
 import authRoute from "./routes/authRoute.js";
 import voteRoute from "./routes/voteRoute.js";
+import qrRoute from "./routes/qrRoute.js";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/speakers", speakerRoute);
 app.use("/events", eventRoute);      
 app.use("/auth", authRoute);
 app.use("/votes", voteRoute);
+app.use("/qrcodes", qrRoute);
 
 app.listen(3000, () => {
   console.log("Server running di port 3000");

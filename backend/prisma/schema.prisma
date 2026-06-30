@@ -73,6 +73,8 @@ model transactions {
   status      String    @default("pending") @db.VarChar(20)
   created_at  DateTime? @default(now()) @db.Timestamp(6)
   finalists   finalists @relation(fields: [finalist_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  kode_unik   Int?
+  grand_total Int?
 }
 
 model events {
@@ -86,4 +88,12 @@ model events {
   created_at   DateTime?  @default(now()) @db.Timestamp(6)
   categories   categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   finalists    finalists  @relation(fields: [pembicara_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model qrcodes {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  image       String   @db.Text
+  description String?  @db.Text
+  status      String   @default("Aktif") @db.VarChar(20)
 }

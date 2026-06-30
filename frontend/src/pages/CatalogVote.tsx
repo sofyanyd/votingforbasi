@@ -61,55 +61,24 @@ export default function CatalogVote() {
     };
   }, []);
 
-  const handleSubmitVotes = async () => {
-    setSubmitting(true);
-    try {
-      const response = await axios.post(`${API_BASE_URL}/votes/request-payment`, { cart });
-      const { token, redirect_url, transactionCode, isMock } = response.data;
+  // Di dalam CatalogVote.tsx
+const handleSubmitVotes = async () => {
+  setSubmitting(true);
+  try {
+    // 1. Minta backend membuat transaksi status "pending"
+    const response = await axios.post(`${API_BASE_URL}/votes/request-payment`, { cart });
+    const { transactionCode, kodeUnik, grandTotal } = response.data;
 
-      if (isMock) {
-        const simulate = window.confirm(
-          "Kunci server Midtrans belum dipasang di backend (.env).\n" +
-          "Apakah Anda ingin mensimulasikan Pembayaran Berhasil?"
-        );
-        if (simulate) {
-          console.log("Menghubungkan pembayaran simulasi...");
-          await axios.post(`${API_BASE_URL}/votes/finalize-payment`, { transactionCode, cart });
-          alert("Pembayaran Simulasi Berhasil! Vote Anda telah terekam.");
-          setCart([]);
-          navigate("/leaderboard");
-        }
-        return;
-      }
-
-      if ((window as any).snap) {
-        (window as any).snap.pay(token, {
-          onSuccess: async (result: any) => {
-            console.log("Midtrans payment success:", result);
-            await axios.post(`${API_BASE_URL}/votes/finalize-payment`, { transactionCode, cart });
-            alert("Pembayaran Berhasil! Vote Anda telah terekam.");
-            setCart([]);
-            navigate("/leaderboard");
-          },
-          onPending: (result: any) => {
-            console.log("Midtrans payment pending:", result);
-            alert("Pembayaran tertunda. Silakan selesaikan instruksi Midtrans.");
-          },
-          onError: (result: any) => {
-            console.error("Midtrans payment error:", result);
-            alert("Kesalahan pembayaran Midtrans.");
-          },
-        });
-      } else {
-        window.open(redirect_url, "_blank");
-      }
-    } catch (error) {
-      console.error("Gagal memproses pembayaran:", error);
-      alert("Gagal memproses pembayaran.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    // 2. Arahkan user ke halaman Checkout dengan membawa data transaksi
+    navigate("/checkout", { 
+      state: { cart, totalPrice, transactionCode, kodeUnik, grandTotal } 
+    });
+  } catch (error) {
+    alert("Gagal membuat tagihan pembayaran.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const handleUpdateQty = (participant: Participant, delta: number) => {
     setCart((prevCart) => {

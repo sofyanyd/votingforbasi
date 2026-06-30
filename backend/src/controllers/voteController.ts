@@ -84,6 +84,8 @@ export const getTransactions = async (req: Request, res: Response) => {
         voterEmail: t.voter_email,
         votesCount: t.votes_count,
         amount: t.amount,
+        kodeUnik: t.kode_unik || 0,
+        grandTotal: t.grand_total || t.amount,
         status: t.status === "pending" ? "Pending" : t.status === "Lunas" ? "Lunas" : t.status === "Batal" ? "Batal" : t.status
       };
     });
@@ -171,7 +173,6 @@ export const submitVotes = async (req: Request, res: Response) => {
   }
 };
 
-// REQUEST PAYMENT (Midtrans Snap Token Generator)
 export const requestPayment = async (req: Request, res: Response) => {
   try {
     const { cart } = req.body;
@@ -183,89 +184,55 @@ export const requestPayment = async (req: Request, res: Response) => {
     let totalAmount = 0;
     const voterEmail = "guest@forbasi.com";
 
-    // 1. Insert pending transaction for each item in cart
+    // Hitung total dasar
+    for (const item of cart) {
+      totalAmount += (Number(item.qty) * 5000);
+    }
+
+    // Buat Kode Unik (Selalu 0 karena dicocokkan secara manual via jumlah & tanggal)
+    const kodeUnik = 0;
+    const grandTotal = totalAmount;
+
+    // Simpan ke database
     for (const item of cart) {
       const finalistId = Number(item.id);
       const qty = Number(item.qty);
-      const amount = qty * 5000; // Rp 5.000 / vote
-      totalAmount += amount;
-
-      const uniqueTxCode = `TX-${finalistId}-${paymentCode}`;
+      const amount = qty * 5000;
 
       await prisma.transactions.create({
         data: {
-          code: uniqueTxCode,
+          code: `TX-${finalistId}-${paymentCode}`,
           finalist_id: finalistId,
           votes_count: qty,
-          amount: amount,
+          amount: amount, 
           voter_email: voterEmail,
-          status: "pending"
+          status: "pending",
+          kode_unik: kodeUnik,      
+          grand_total: grandTotal   
         }
       });
     }
 
-    // 2. Call Midtrans Snap API to get transaction token
-    const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
-    
-    if (!serverKey) {
-      console.warn("WARNING: MIDTRANS_SERVER_KEY is not set in environment. Using mock payment token.");
-      return res.status(200).json({
-        token: `mock-snap-token-${paymentCode}`,
-        redirect_url: `https://mock-redirect.midtrans.com?order_id=${paymentCode}`,
-        transactionCode: paymentCode,
-        isMock: true
-      });
-    }
-
-    const midtransUrl = "https://app.sandbox.midtrans.com/snap/v1/transactions";
-    const authHeader = `Basic ${Buffer.from(serverKey + ":").toString("base64")}`;
-
-    const midtransPayload = {
-      transaction_details: {
-        order_id: paymentCode,
-        gross_amount: totalAmount
-      },
-      credit_card: {
-        secure: true
-      },
-      customer_details: {
-        first_name: "Voter Guest",
-        email: voterEmail
-      }
-    };
-
-    const midtransResponse = await fetch(midtransUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": authHeader
-      },
-      body: JSON.stringify(midtransPayload)
-    });
-
-    if (!midtransResponse.ok) {
-      const errorText = await midtransResponse.text();
-      console.error("Midtrans Snap API error response:", errorText);
-      throw new Error(`Gagal menghubungi Midtrans Snap API: ${midtransResponse.statusText}`);
-    }
-
-    const midtransData = await midtransResponse.json();
-
+    // Kembalikan ke frontend
     res.status(200).json({
-      token: midtransData.token,
-      redirect_url: midtransData.redirect_url,
       transactionCode: paymentCode,
-      isMock: false
+      totalAmount: totalAmount,
+      kodeUnik: kodeUnik,
+      grandTotal: grandTotal
     });
   } catch (error: any) {
     console.error("Gagal request payment:", error);
-    res.status(500).json({ message: error.message || "Gagal memproses request pembayaran", error });
+    res.status(500).json({ message: error.message || "Gagal memproses request pembayaran" });
   }
 };
 
 // COMPLETE PAYMENT HELPER (Idempotent db update for transactions, tickets, and votes)
 export const completePayment = async (paymentCode: string) => {
+  let cleanCode = paymentCode;
+  if (paymentCode.startsWith("TX-")) {
+    cleanCode = paymentCode.split("-").slice(2).join("-");
+  }
+
   // Find a voter user, or fall back to the first user in the DB to avoid foreign key violations
   let user = await prisma.users.findFirst({ where: { role: "voter" } });
   if (!user) {
@@ -278,7 +245,7 @@ export const completePayment = async (paymentCode: string) => {
     const updateResult = await tx.transactions.updateMany({
       where: {
         code: {
-          contains: paymentCode
+          contains: cleanCode
         },
         status: "pending"
       },
@@ -288,7 +255,7 @@ export const completePayment = async (paymentCode: string) => {
     });
 
     if (updateResult.count === 0) {
-      console.log(`No pending transactions found for paymentCode: ${paymentCode} (might be already processed)`);
+      console.log(`No pending transactions found for paymentCode: ${cleanCode} (might be already processed)`);
       return { success: false, message: "No pending transactions found or already processed" };
     }
 
@@ -296,7 +263,7 @@ export const completePayment = async (paymentCode: string) => {
     const transactions = await tx.transactions.findMany({
       where: {
         code: {
-          contains: paymentCode
+          contains: cleanCode
         },
         status: "Lunas"
       }
@@ -309,7 +276,7 @@ export const completePayment = async (paymentCode: string) => {
 
       const votePromises = [];
       for (let i = 0; i < qty; i++) {
-        const ticketCode = `TICKET-MIDTRANS-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        const ticketCode = `TXV-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
         
         votePromises.push((async () => {
           const newTicket = await tx.tickets.create({
@@ -371,65 +338,139 @@ export const finalizePayment = async (req: Request, res: Response) => {
   }
 };
 
-// MIDTRANS WEBHOOK NOTIFICATION (Called asynchronously by Midtrans)
-export const midtransWebhook = async (req: Request, res: Response) => {
+// MOOTA WEBHOOK NOTIFICATION (Dipanggil otomatis oleh sistem Moota)
+export const mootaWebhook = async (req: Request, res: Response) => {
   try {
-    const notification = req.body;
-    console.log("Midtrans Notification Received:", notification);
+    const mutations = req.body;
+    console.log("Moota Webhook Received:", mutations);
 
-    const {
-      order_id,
-      transaction_status,
-      status_code,
-      gross_amount,
-      signature_key
-    } = notification;
+    for (const mutasi of mutations) {
+      if (mutasi.type === 'CR') {
+        const nominalMasuk = parseInt(mutasi.amount);
 
-    if (!order_id) {
-      return res.status(400).json({ message: "Invalid notification payload" });
-    }
+        const pendingTransactions = await prisma.transactions.findMany({
+          where: {
+            grand_total: nominalMasuk,
+            status: "pending"
+          }
+        });
 
-    // Validate signature key
-    const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
-    if (serverKey) {
-      const signatureStr = order_id + status_code + gross_amount + serverKey;
-      const computedSignature = crypto.createHash("sha512").update(signatureStr).digest("hex");
-      if (computedSignature !== signature_key) {
-        console.error("Invalid Midtrans signature key!");
-        return res.status(403).json({ message: "Invalid signature" });
+        if (pendingTransactions.length > 0) {
+          const txCode = pendingTransactions[0].code;
+          const paymentCode = txCode.split('-').slice(2).join('-'); 
+
+          await completePayment(paymentCode);
+          console.log(`Pembayaran otomatis sukses untuk kode ${paymentCode}`);
+        }
       }
     }
 
-    // Check payment success status
-    const isSuccess = 
-      transaction_status === "settlement" || 
-      (transaction_status === "capture" && notification.fraud_status === "accept");
+    res.status(200).send("OK");
+  } catch (error: any) {
+    console.error("Error di Moota Webhook:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
-    if (isSuccess) {
-      console.log(`Payment success for order_id: ${order_id}. Completing payment...`);
-      const result = await completePayment(order_id);
-      return res.status(200).json({ 
-        message: "Webhook processed successfully", 
-        result 
+// DELETE / CANCEL TRANSACTION (Wipe transaction and its votes/tickets if they exist)
+export const deleteTransaction = async (req: Request, res: Response) => {
+  try {
+    const { code } = req.params;
+    if (!code) {
+      return res.status(400).json({ message: "Kode transaksi tidak boleh kosong" });
+    }
+
+    const codeStr = String(code);
+    let cleanCode = codeStr;
+    if (codeStr.startsWith("TX-")) {
+      cleanCode = codeStr.split("-").slice(2).join("-");
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Find all transactions matching the payment code
+      const transactions = await tx.transactions.findMany({
+        where: {
+          code: {
+            contains: cleanCode
+          }
+        }
       });
-    } else {
-      console.log(`Payment not successful for order_id: ${order_id}. Status: ${transaction_status}`);
-      
-      // If status is deny/cancel/expire, we update status to "Batal"
-      if (["deny", "cancel", "expire"].includes(transaction_status)) {
-        await prisma.transactions.updateMany({
+
+      // 2. Find all tickets that contain the cleanCode
+      const ticketsToDelete = await tx.tickets.findMany({
+        where: {
+          code: {
+            contains: cleanCode
+          }
+        }
+      });
+
+      const ticketIds = ticketsToDelete.map((t) => t.id);
+
+      // Fallback for older transactions that do not contain cleanCode inside their ticket codes
+      if (ticketIds.length === 0) {
+        for (const transaction of transactions) {
+          if (transaction.status === "Lunas" && transaction.created_at) {
+            const txTime = new Date(transaction.created_at);
+            const fifteenSecondsBefore = new Date(txTime.getTime() - 15000);
+            const fifteenSecondsAfter = new Date(txTime.getTime() + 15000);
+
+            // Find votes for this finalist cast around this transaction's timestamp
+            const oldVotes = await tx.votes.findMany({
+              where: {
+                finalist_id: transaction.finalist_id,
+                voted_at: {
+                  gte: fifteenSecondsBefore,
+                  lte: fifteenSecondsAfter
+                }
+              },
+              take: transaction.votes_count
+            });
+
+            const oldTicketIds = oldVotes.map((v) => v.ticket_id);
+            if (oldTicketIds.length > 0) {
+              ticketIds.push(...oldTicketIds);
+            }
+          }
+        }
+      }
+
+      // 3. Delete votes linked to these tickets
+      if (ticketIds.length > 0) {
+        await tx.votes.deleteMany({
           where: {
-            code: { contains: order_id },
-            status: "pending"
-          },
-          data: { status: "Batal" }
+            ticket_id: {
+              in: ticketIds
+            }
+          }
+        });
+
+        // 4. Delete tickets
+        await tx.tickets.deleteMany({
+          where: {
+            id: {
+              in: ticketIds
+            }
+          }
         });
       }
 
-      return res.status(200).json({ message: `Transaction status is ${transaction_status}` });
-    }
+      // 5. Delete transactions
+      const deleteResult = await tx.transactions.deleteMany({
+        where: {
+          code: {
+            contains: cleanCode
+          }
+        }
+      });
+
+      return { success: true, deletedCount: deleteResult.count };
+    });
+
+    clearLeaderboardCache();
+    res.status(200).json({ message: "Transaksi dan seluruh suara terkait berhasil dihapus!", count: result.deletedCount });
   } catch (error: any) {
-    console.error("Error in Midtrans webhook notification:", error);
-    res.status(500).json({ message: error.message || "Internal server error" });
+    console.error("Gagal menghapus transaksi:", error);
+    res.status(500).json({ message: error.message || "Gagal menghapus transaksi", error });
   }
 };

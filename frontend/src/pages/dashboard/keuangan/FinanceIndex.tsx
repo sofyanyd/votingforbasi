@@ -23,11 +23,13 @@ interface VoteTransaction {
   voterEmail: string;
   votesCount: number;
   amount: number;
-  status: "Lunas";
+  kodeUnik?: number;
+  grandTotal?: number;
+  status: string;
 }
 
 export default function FinanceIndex() {
-  const { qrList, addQrCode, updateQrCode, deleteQrCode } = useQrCodeStore();
+  const { qrList, addQrCode, updateQrCode, deleteQrCode, fetchQrCodes } = useQrCodeStore();
 
   const [transactions, setTransactions] = useState<VoteTransaction[]>([]);
   const [pletonList, setPletonList] = useState<any[]>([]);
@@ -62,7 +64,8 @@ export default function FinanceIndex() {
       try {
         const [txRes, speakerRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/votes/transactions`),
-          axios.get(`${API_BASE_URL}/speakers`)
+          axios.get(`${API_BASE_URL}/speakers`),
+          fetchQrCodes()
         ]);
         setTransactions(txRes.data);
         setPletonList(speakerRes.data);
@@ -85,6 +88,56 @@ export default function FinanceIndex() {
       document.head.removeChild(link);
     };
   }, []);
+
+  const handleApproveManual = async (transactionCode: string) => {
+    if (!window.confirm("Apakah Anda yakin ingin memverifikasi transaksi pembayaran manual ini secara manual?")) {
+      return;
+    }
+    
+    showToast("Memproses verifikasi pembayaran...", "loading");
+    try {
+      await axios.post(`${API_BASE_URL}/votes/finalize-payment`, { transactionCode });
+      showToast("Pembayaran berhasil diverifikasi secara manual! Suara vote telah masuk ke sistem.", "success");
+      
+      // Refresh transactions and pletons list
+      const [txRes, speakersRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/votes/transactions`),
+        axios.get(`${API_BASE_URL}/speakers`)
+      ]);
+      setTransactions(txRes.data);
+      setPletonList(speakersRes.data);
+    } catch (error: any) {
+      console.error("Gagal melakukan verifikasi manual:", error);
+      showToast(error.response?.data?.message || "Gagal memverifikasi transaksi secara manual", "error");
+    }
+  };
+
+  const handleDeleteTransaction = async (transactionCode: string, status: string) => {
+    const confirmMessage = status === "Lunas"
+      ? `⚠️ PERINGATAN: Transaksi ini berstatus LUNAS. Menghapus transaksi ini akan membatalkan pembayaran dan MENGHAPUS/MENGURANGI suara (vote) yang telah masuk ke pleton terkait.\n\nApakah Anda yakin ingin menghapus transaksi ini?`
+      : `Apakah Anda yakin ingin menghapus transaksi pending ini?`;
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    showToast("Menghapus transaksi...", "loading");
+    try {
+      await axios.delete(`${API_BASE_URL}/votes/transactions/${transactionCode}`);
+      showToast("Transaksi dan suara terkait berhasil dihapus!", "success");
+
+      // Refresh transactions and pletons list
+      const [txRes, speakersRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/votes/transactions`),
+        axios.get(`${API_BASE_URL}/speakers`)
+      ]);
+      setTransactions(txRes.data);
+      setPletonList(speakersRes.data);
+    } catch (error: any) {
+      console.error("Gagal menghapus transaksi:", error);
+      showToast(error.response?.data?.message || "Gagal menghapus transaksi", "error");
+    }
+  };
 
   // Helper to parse bidang string "No. {noUrut} - {sekolah}"
   const parseBidang = (bidang: string) => {
@@ -258,12 +311,12 @@ export default function FinanceIndex() {
   // Open Modal for QR Code Creation/Edition
   const openQrModal = (qr?: QrCode) => {
     if (qr) {
-      setEditingQrId(qr.id);
+      setEditingQrId(String(qr.id));
       setQrName(qr.name);
       setQrImage(qr.image);
       setQrImagePreview(qr.image);
       setQrDescription(qr.description);
-      setQrStatus(qr.status);
+      setQrStatus(qr.status as "Aktif" | "Non-Aktif");
     } else {
       setEditingQrId(null);
       setQrName("");
@@ -276,7 +329,7 @@ export default function FinanceIndex() {
   };
 
   // Submit QR Code Form
-  const handleQrSubmit = (e: React.FormEvent) => {
+  const handleQrSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!qrName.trim() || !qrDescription.trim()) {
@@ -295,22 +348,31 @@ export default function FinanceIndex() {
       status: qrStatus,
     };
 
-    if (editingQrId) {
-      updateQrCode(editingQrId, payload);
-      showToast("QR Code berhasil diperbarui!", "success");
-    } else {
-      addQrCode(payload);
-      showToast("QR Code berhasil ditambahkan!", "success");
+    showToast("Menyimpan QR Code...", "loading");
+    try {
+      if (editingQrId) {
+        await updateQrCode(editingQrId, payload);
+        showToast("QR Code berhasil diperbarui!", "success");
+      } else {
+        await addQrCode(payload);
+        showToast("QR Code berhasil ditambahkan!", "success");
+      }
+      setIsQrModalOpen(false);
+    } catch (error) {
+      showToast("Gagal menyimpan QR Code.", "error");
     }
-
-    setIsQrModalOpen(false);
   };
 
   // Delete QR Code
-  const handleQrDelete = (id: string, name: string) => {
+  const handleQrDelete = async (id: string | number, name: string) => {
     if (window.confirm(`Apakah Anda yakin ingin menghapus QR Code "${name}"?`)) {
-      deleteQrCode(id);
-      showToast("QR Code berhasil dihapus!", "success");
+      showToast("Menghapus QR Code...", "loading");
+      try {
+        await deleteQrCode(id);
+        showToast("QR Code berhasil dihapus!", "success");
+      } catch (error) {
+        showToast("Gagal menghapus QR Code.", "error");
+      }
     }
   };
 
@@ -505,7 +567,7 @@ export default function FinanceIndex() {
             <div className="mt-4 space-y-4 text-xs font-semibold text-slate-600">
               <div className="p-3 bg-indigo-50/50 text-indigo-700 rounded-2xl border border-indigo-100/50">
                 <span className="block font-bold mb-0.5 text-indigo-800">Nominal Per Suara</span>
-                Rp 2.000,- per 1 vote dukungan untuk finalis jagoan.
+                Rp 5.000,- per 1 vote dukungan untuk finalis jagoan.
               </div>
 
               <div className="p-3 bg-slate-50 text-slate-600 rounded-2xl border border-slate-200/50">
@@ -621,12 +683,13 @@ export default function FinanceIndex() {
                   <th className="p-4 text-center">Jumlah Voting</th>
                   <th className="p-4 text-right">Total Transaksi</th>
                   <th className="p-4 text-center hidden sm:table-cell">Status</th>
+                  <th className="p-4 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400 font-semibold text-sm">
+                    <td colSpan={8} className="p-8 text-center text-slate-400 font-semibold text-sm">
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                         Memuat data transaksi...
@@ -645,17 +708,44 @@ export default function FinanceIndex() {
                       </td>
                       <td className="p-4 font-semibold text-slate-500 hidden md:table-cell">{tx.voterEmail}</td>
                       <td className="p-4 text-center font-bold text-slate-750">{tx.votesCount} Suara</td>
-                      <td className="p-4 text-right font-extrabold text-slate-800">{formatCurrency(tx.amount)}</td>
+                      <td className="p-4 text-right font-extrabold text-slate-900">{formatCurrency(tx.amount)}</td>
                       <td className="p-4 text-center hidden sm:table-cell">
-                        <span className="inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-emerald-50 text-emerald-700">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
+                          tx.status === "Lunas" 
+                            ? "bg-emerald-50 text-emerald-700" 
+                            : tx.status === "Pending" 
+                            ? "bg-amber-50 text-amber-700" 
+                            : tx.status === "Batal"
+                            ? "bg-rose-50 text-rose-700"
+                            : "bg-slate-50 text-slate-700"
+                        }`}>
                           {tx.status}
                         </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          {tx.status === "Pending" && (
+                            <button
+                              onClick={() => handleApproveManual(tx.id)}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+                            >
+                              ACC
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteTransaction(tx.id, tx.status)}
+                            className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                            title="Hapus Transaksi"
+                          >
+                            Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400 font-semibold text-sm">Tidak ditemukan data transaksi yang cocok.</td>
+                    <td colSpan={8} className="p-8 text-center text-slate-400 font-semibold text-sm">Tidak ditemukan data transaksi yang cocok.</td>
                   </tr>
                 )}
               </tbody>
