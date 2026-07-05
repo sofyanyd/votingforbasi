@@ -37,7 +37,7 @@ export default function CatalogVote() {
             id: item.id,
             name: item.nama,
             subName: subName,
-            price: 5000,
+            price: 3000,
             imageUrl: item.foto_url || `https://via.placeholder.com/300x300.png?text=${encodeURIComponent(item.nama)}`
           };
         });

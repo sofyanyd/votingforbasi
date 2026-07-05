@@ -128,7 +128,7 @@ export const submitVotes = async (req: Request, res: Response) => {
             code: txCode,
             finalist_id: finalistId,
             votes_count: qty,
-            amount: qty * 5000,
+            amount: qty * 3000,
             voter_email: "guest@forbasi.com",
             status: "Lunas"
           }
@@ -205,7 +205,7 @@ export const requestPayment = async (req: Request, res: Response) => {
         return res.status(400).json({ message: `Pleton dengan ID ${finalistId} tidak ditemukan` });
       }
 
-      totalAmount += (qty * 5000);
+      totalAmount += (qty * 3000);
     }
 
     // Buat Kode Unik (Selalu 0 karena dicocokkan secara manual via jumlah & tanggal)
@@ -216,7 +216,7 @@ export const requestPayment = async (req: Request, res: Response) => {
     for (const item of cart) {
       const finalistId = Number(item.id);
       const qty = Number(item.qty);
-      const amount = qty * 5000;
+      const amount = qty * 3000;
 
       await prisma.transactions.create({
         data: {

@@ -214,7 +214,7 @@ export default function FinanceIndex() {
       name: pleton.nama,
       school: sekolah,
       votes: clubVotes,
-      amount: clubVotes * 5000,
+      amount: clubVotes * 3000,
       status: "Aktif",
     };
   });
@@ -567,7 +567,7 @@ export default function FinanceIndex() {
             <div className="mt-4 space-y-4 text-xs font-semibold text-slate-600">
               <div className="p-3 bg-indigo-50/50 text-indigo-700 rounded-2xl border border-indigo-100/50">
                 <span className="block font-bold mb-0.5 text-indigo-800">Nominal Per Suara</span>
-                Rp 5.000,- per 1 vote dukungan untuk finalis jagoan.
+                Rp 3.000,- per 1 vote dukungan untuk finalis jagoan.
               </div>
 
               <div className="p-3 bg-slate-50 text-slate-600 rounded-2xl border border-slate-200/50">
@@ -585,7 +585,7 @@ export default function FinanceIndex() {
           <div>
             <h3 className="text-lg font-bold text-slate-800">Detail Laporan Hasil Voting Pleton</h3>
             <p className="text-xs font-semibold text-slate-400 mt-0.5">
-              Daftar lengkap perolehan suara voting dan akumulasi transaksi keuangan Rp 5.000 per suara.
+              Daftar lengkap perolehan suara voting dan akumulasi transaksi keuangan Rp 3.000 per suara.
             </p>
           </div>
 
