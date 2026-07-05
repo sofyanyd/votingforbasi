@@ -20,14 +20,6 @@ export default function Footer() {
           <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
             Platform official ticketing dan live leaderboard untuk Lomba Kejuaraan Cabang. Mari dukung pleton kebanggaanmu menjadi Juara Favorit!
           </p>
-          <div className="flex items-center gap-4 mt-2">
-            <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition-all duration-300">
-              <Camera size={18} />
-            </a>
-            <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition-all duration-300">
-              <Mail size={18} />
-            </a>
-          </div>
         </div>
 
         {/* ── TAUTAN CEPAT ── */}
@@ -95,7 +87,7 @@ export default function Footer() {
           © {new Date().getFullYear()} FORBASI Kota Tegal. Hak cipta dilindungi undang-undang.
         </p>
         <p className="text-xs text-slate-500 flex items-center gap-1">
-          Developed with <span className="text-emerald-500">♥</span> for KEJURCAB 2026
+          Developed by PPM D4 Teknik Informatika Universitas Harkat Negeri for KEJURCAB 2026
         </p>
       </div>
     </footer>
