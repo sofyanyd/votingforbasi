@@ -399,7 +399,7 @@ export default function FinanceIndex() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight font-extrabold text-[#00a54f]">Keuangan & Voting Forbasi</h2>
-          <p className="text-sm font-medium text-slate-400 mt-1">Pantau total keuangan, histori detail transaksi voting (Rp 2.000 / suara) dan kelola QR Code pembayaran</p>
+          <p className="text-sm font-medium text-slate-400 mt-1">Pantau total keuangan, histori detail transaksi voting (Rp 5.000 / suara) dan kelola QR Code pembayaran</p>
         </div>
         <div className="flex flex-wrap gap-3 w-full md:w-auto">
           {activeTab === "Kelola QR Code" && (
@@ -585,7 +585,7 @@ export default function FinanceIndex() {
           <div>
             <h3 className="text-lg font-bold text-slate-800">Detail Laporan Hasil Voting Pleton</h3>
             <p className="text-xs font-semibold text-slate-400 mt-0.5">
-              Daftar lengkap perolehan suara voting dan akumulasi transaksi keuangan Rp 2.000 per suara.
+              Daftar lengkap perolehan suara voting dan akumulasi transaksi keuangan Rp 5.000 per suara.
             </p>
           </div>
 

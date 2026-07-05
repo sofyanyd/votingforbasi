@@ -1,5 +1,6 @@
 import prisma from "../lib/prisma.js";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -19,7 +20,10 @@ export const login = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({ message: "Email atau password salah" });
         }
-        const token = `admin-token-${user.id}-${Date.now()}`;
+        const timestamp = Date.now();
+        const secret = process.env.JWT_SECRET || "default_fallback_secret_key_123_forbasi";
+        const signature = crypto.createHmac("sha256", secret).update(`${user.id}-${timestamp}`).digest("hex");
+        const token = `admin-token-${user.id}-${timestamp}-${signature}`;
         res.status(200).json({
             message: "Login berhasil",
             token,

@@ -5,7 +5,6 @@ import {
   submitVotes,
   requestPayment,
   finalizePayment,
-  mootaWebhook,
   deleteTransaction
 } from "../controllers/voteController.js";
 
@@ -20,7 +19,7 @@ router.post("/request-payment", requestPayment);
 router.post("/finalize-payment", finalizePayment);
 router.delete("/transactions/:code", requireAdmin, deleteTransaction);
 
-// Endpoint baru untuk menangkap notifikasi uang masuk dari Moota
-router.post("/moota-webhook", mootaWebhook);
+// Endpoint untuk menangkap notifikasi Moota dinonaktifkan demi keamanan karena beralih ke alur persetujuan manual (ACC) admin
+// router.post("/moota-webhook", mootaWebhook);
 
 export default router;

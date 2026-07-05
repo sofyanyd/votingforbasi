@@ -75,10 +75,12 @@ export const getTransactions = async (req: Request, res: Response) => {
         date: t.created_at ? new Date(t.created_at).toLocaleDateString("id-ID", {
           day: "numeric",
           month: "long",
-          year: "numeric"
+          year: "numeric",
+          timeZone: "Asia/Jakarta"
         }) + " " + new Date(t.created_at).toLocaleTimeString("id-ID", {
           hour: "2-digit",
-          minute: "2-digit"
+          minute: "2-digit",
+          timeZone: "Asia/Jakarta"
         }) : "-",
         namaKlub: t.finalists.nama,
         voterEmail: t.voter_email,
@@ -184,9 +186,26 @@ export const requestPayment = async (req: Request, res: Response) => {
     let totalAmount = 0;
     const voterEmail = "guest@forbasi.com";
 
-    // Hitung total dasar
+    // Hitung total dasar dan validasi input secara ketat
     for (const item of cart) {
-      totalAmount += (Number(item.qty) * 5000);
+      const qty = Number(item.qty);
+      if (!Number.isInteger(qty) || qty <= 0) {
+        return res.status(400).json({ message: "Jumlah vote harus berupa bilangan bulat positif" });
+      }
+
+      const finalistId = Number(item.id);
+      if (isNaN(finalistId)) {
+        return res.status(400).json({ message: "ID Pleton tidak valid" });
+      }
+
+      const finalistExists = await prisma.finalists.findUnique({
+        where: { id: finalistId }
+      });
+      if (!finalistExists) {
+        return res.status(400).json({ message: `Pleton dengan ID ${finalistId} tidak ditemukan` });
+      }
+
+      totalAmount += (qty * 5000);
     }
 
     // Buat Kode Unik (Selalu 0 karena dicocokkan secara manual via jumlah & tanggal)
