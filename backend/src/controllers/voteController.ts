@@ -322,6 +322,9 @@ export const completePayment = async (paymentCode: string) => {
     console.log(`Payment code ${paymentCode} completed successfully. Casted votes.`);
     clearLeaderboardCache();
     return { success: true, count: transactions.length };
+  }, {
+    maxWait: 15000, // 15 seconds
+    timeout: 60000  // 60 seconds
   });
 };
 
@@ -491,5 +494,82 @@ export const deleteTransaction = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Gagal menghapus transaksi:", error);
     res.status(500).json({ message: error.message || "Gagal menghapus transaksi", error });
+  }
+};
+
+export const submitOfflineVotes = async (req: Request, res: Response) => {
+  try {
+    const { finalistId, votesCount, voterEmail } = req.body;
+    
+    const finalistIdNum = Number(finalistId);
+    const votesCountNum = Number(votesCount);
+
+    if (isNaN(finalistIdNum) || isNaN(votesCountNum) || votesCountNum <= 0) {
+      return res.status(400).json({ message: "ID Pleton atau Jumlah Vote tidak valid" });
+    }
+
+    const finalistExists = await prisma.finalists.findUnique({
+      where: { id: finalistIdNum }
+    });
+    if (!finalistExists) {
+      return res.status(450).json({ message: "Pleton tidak ditemukan" });
+    }
+
+    const email = voterEmail || "offline@forbasi.com";
+    const paymentCode = `OFFLINE-${Date.now()}`;
+    const transactionCode = `TX-${finalistIdNum}-${paymentCode}`;
+
+    // Find a voter user, or fallback
+    let user = await prisma.users.findFirst({ where: { role: "voter" } });
+    if (!user) {
+      user = await prisma.users.findFirst();
+    }
+    const userId = user ? user.id : 2;
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Create a transaction marked as Lunas
+      await tx.transactions.create({
+        data: {
+          code: transactionCode,
+          finalist_id: finalistIdNum,
+          votes_count: votesCountNum,
+          amount: votesCountNum * 3000,
+          voter_email: email,
+          status: "Lunas",
+          kode_unik: 0,
+          grand_total: votesCountNum * 3000
+        }
+      });
+
+      // 2. Create tickets and votes
+      for (let i = 0; i < votesCountNum; i++) {
+        const ticketCode = `TXV-${paymentCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+        const newTicket = await tx.tickets.create({
+          data: {
+            code: ticketCode,
+            status: "used",
+            user_id: userId,
+            used_at: new Date()
+          }
+        });
+
+        await tx.votes.create({
+          data: {
+            user_id: userId,
+            finalist_id: finalistIdNum,
+            ticket_id: newTicket.id
+          }
+        });
+      }
+    }, {
+      maxWait: 15000,
+      timeout: 60000 // 60 seconds timeout
+    });
+
+    clearLeaderboardCache();
+    res.status(200).json({ message: "Vote offline berhasil dimasukkan ke sistem!", success: true });
+  } catch (error: any) {
+    console.error("Gagal submit vote offline:", error);
+    res.status(500).json({ message: error.message || "Gagal memproses vote offline" });
   }
 };

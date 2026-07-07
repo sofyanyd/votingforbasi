@@ -16,8 +16,20 @@ export default function DashboardLayout() {
   // Initialize sidebar open based on screen size (default open on desktop, closed on mobile)
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
   const location = useLocation();
+  const [currentDate, setCurrentDate] = useState("");
+
+  useEffect(() => {
+    const formatted = new Date().toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+    setCurrentDate(formatted);
+  }, []);
 
   // Close sidebar on mobile when navigating
   useEffect(() => {
@@ -153,12 +165,12 @@ export default function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
-            <span className="text-xs sm:text-sm font-medium text-gray-500 hidden sm:inline">Minggu, 21 Juni 2026</span> 
+            <span className="text-xs sm:text-sm font-medium text-gray-500 hidden sm:inline">{currentDate}</span> 
             <div className="flex items-center gap-2 sm:gap-3 bg-white/50 py-1 sm:py-1.5 px-2 sm:px-3 rounded-full border border-emerald-100">
               <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#00a54f]/20 flex items-center justify-center text-[#00a54f] font-bold text-xs">
-                A
+                {user ? user.charAt(0).toUpperCase() : "A"}
               </div>
-              <span className="text-xs sm:text-sm font-semibold text-[#00a54f]">Admin</span>
+              <span className="text-xs sm:text-sm font-semibold text-[#00a54f]">{user || "Admin"}</span>
             </div>
           </div>
         </header>

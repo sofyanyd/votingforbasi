@@ -36,7 +36,7 @@ export default function FinanceIndex() {
   const [loading, setLoading] = useState(true);
 
   // Navigation Tab State
-  const [activeTab, setActiveTab] = useState<"Dashboard" | "Detail Laporan" | "Histori Transaksi" | "Kelola QR Code">("Dashboard");
+  const [activeTab, setActiveTab] = useState<"Dashboard" | "Detail Laporan" | "Histori Transaksi" | "Kelola QR Code" | "Tambah Vote Offline">("Dashboard");
   
   // Filters State
   const [selectedMonth, setSelectedMonth] = useState("Semua");
@@ -57,6 +57,13 @@ export default function FinanceIndex() {
   const [qrDescription, setQrDescription] = useState("");
   const [qrStatus, setQrStatus] = useState<"Aktif" | "Non-Aktif">("Aktif");
 
+  // Detail Modal State
+  const [selectedGroup, setSelectedGroup] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  // Offline Votes Form State
+  const [selectedPletonId, setSelectedPletonId] = useState("");
+  const [offlineVotesQty, setOfflineVotesQty] = useState(1);
+  const [offlineVoterEmail, setOfflineVoterEmail] = useState("");
   // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
@@ -139,6 +146,48 @@ export default function FinanceIndex() {
     }
   };
 
+  const handleSubmitOfflineVotes = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPletonId) {
+      showToast("Pilih Pleton jagoan terlebih dahulu", "error");
+      return;
+    }
+    if (offlineVotesQty <= 0) {
+      showToast("Jumlah vote harus berupa bilangan positif", "error");
+      return;
+    }
+
+    if (!window.confirm(`Apakah Anda yakin ingin menambahkan ${offlineVotesQty} vote offline untuk Pleton pilihan ini?`)) {
+      return;
+    }
+
+    showToast("Memasukkan vote offline...", "loading");
+    try {
+      await axios.post(`${API_BASE_URL}/votes/submit-offline`, {
+        finalistId: selectedPletonId,
+        votesCount: offlineVotesQty,
+        voterEmail: offlineVoterEmail.trim() || undefined
+      });
+      showToast("Vote offline berhasil dimasukkan ke sistem!", "success");
+      
+      // Reset form
+      setSelectedPletonId("");
+      setOfflineVotesQty(1);
+      setOfflineVoterEmail("");
+
+      // Refresh data
+      const [txRes, speakersRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/votes/transactions`),
+        axios.get(`${API_BASE_URL}/speakers`)
+      ]);
+      setTransactions(txRes.data);
+      setPletonList(speakersRes.data);
+    } catch (error: any) {
+      console.error("Gagal menambahkan vote offline:", error);
+      showToast(error.response?.data?.message || "Gagal memproses vote offline", "error");
+    }
+  };
+
   // Helper to parse bidang string "No. {noUrut} - {sekolah}"
   const parseBidang = (bidang: string) => {
     let noUrutParsed = "01";
@@ -184,6 +233,61 @@ export default function FinanceIndex() {
 
     return matchesSearch && matchesMonth;
   });
+
+  // Helpers to get base payment code
+  const getPaymentCode = (id: string) => {
+    if (id.startsWith("TX-")) {
+      return id.split("-").slice(2).join("-");
+    }
+    return id;
+  };
+
+  // Group transactions for rendering in the Histori Transaksi log
+  const groupedTransactionsList = React.useMemo(() => {
+    const groups: { [key: string]: any } = {};
+
+    filteredTransactions.forEach((tx) => {
+      const pCode = getPaymentCode(tx.id);
+      if (!groups[pCode]) {
+        groups[pCode] = {
+          paymentCode: pCode,
+          date: tx.date,
+          voterEmail: tx.voterEmail,
+          status: tx.status,
+          totalVotes: 0,
+          totalAmount: 0,
+          grandTotal: tx.grandTotal || 0,
+          items: []
+        };
+      }
+
+      groups[pCode].totalVotes += tx.votesCount;
+      groups[pCode].totalAmount += tx.amount;
+      if ((tx.grandTotal || tx.amount) > groups[pCode].grandTotal) {
+        groups[pCode].grandTotal = tx.grandTotal || tx.amount;
+      }
+      
+      if (tx.status === "Lunas") {
+        groups[pCode].status = "Lunas";
+      } else if (tx.status === "Batal" && groups[pCode].status === "Pending") {
+        groups[pCode].status = "Batal";
+      }
+
+      groups[pCode].items.push({
+        id: tx.id,
+        namaKlub: tx.namaKlub,
+        votesCount: tx.votesCount,
+        amount: tx.amount
+      });
+    });
+
+    return Object.values(groups);
+  }, [filteredTransactions]);
+
+  const handleOpenDetails = (group: any) => {
+    setSelectedGroup(group);
+    setIsDetailModalOpen(true);
+  };
 
   // Filtered QR List for Search
   const filteredQrList = qrList.filter((qr) => {
@@ -399,7 +503,7 @@ export default function FinanceIndex() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight font-extrabold text-[#00a54f]">Keuangan & Voting Forbasi</h2>
-          <p className="text-sm font-medium text-slate-400 mt-1">Pantau total keuangan, histori detail transaksi voting (Rp 5.000 / suara) dan kelola QR Code pembayaran</p>
+          <p className="text-sm font-medium text-slate-400 mt-1">Pantau total keuangan, histori detail transaksi voting (Rp 3.000 / suara) dan kelola QR Code pembayaran</p>
         </div>
         <div className="flex flex-wrap gap-3 w-full md:w-auto">
           {activeTab === "Kelola QR Code" && (
@@ -499,7 +603,8 @@ export default function FinanceIndex() {
           { key: "Dashboard", label: "Dashboard Ringkasan" },
           { key: "Detail Laporan", label: "Detail Laporan Pleton" },
           { key: "Histori Transaksi", label: "Histori Transaksi" },
-          { key: "Kelola QR Code", label: "Kelola QR Code" }
+          { key: "Kelola QR Code", label: "Kelola QR Code" },
+          { key: "Tambah Vote Offline", label: "Tambah Vote Offline" }
         ].map((tab) => {
           const isActive = activeTab === tab.key;
           return (
@@ -676,41 +781,52 @@ export default function FinanceIndex() {
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
-                  <th className="p-4">ID Transaksi</th>
-                  <th className="p-4 hidden sm:table-cell">Tanggal</th>
-                  <th className="p-4">Nama Pleton</th>
+                  <th className="p-4">ID / Tanggal</th>
+                  <th className="p-4">Pleton & Suara</th>
                   <th className="p-4 hidden md:table-cell">Email Pembeli</th>
-                  <th className="p-4 text-center">Jumlah Voting</th>
                   <th className="p-4 text-right">Total Transaksi</th>
-                  <th className="p-4 text-center hidden sm:table-cell">Status</th>
+                  <th className="p-4 text-center">Status</th>
                   <th className="p-4 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-slate-400 font-semibold text-sm">
+                    <td colSpan={6} className="p-8 text-center text-slate-400 font-semibold text-sm">
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                         Memuat data transaksi...
                       </div>
                     </td>
                   </tr>
-                ) : filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-4 font-bold text-indigo-650">{tx.id}</td>
-                      <td className="p-4 text-slate-400 hidden sm:table-cell">{tx.date}</td>
-                      <td className="p-4 font-bold text-slate-800">
-                        <div>{tx.namaKlub}</div>
-                        <div className="sm:hidden text-[10px] text-slate-400 font-semibold mt-0.5">{tx.date}</div>
-                        <div className="md:hidden text-[10px] text-slate-500 font-semibold truncate max-w-[150px]">{tx.voterEmail}</div>
+                ) : groupedTransactionsList.length > 0 ? (
+                  groupedTransactionsList.map((tx) => (
+                    <tr key={tx.paymentCode} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="p-4 font-semibold text-slate-700">
+                        <span className="font-bold text-indigo-650 break-all block text-xs min-w-[120px]">{tx.paymentCode}</span>
+                        <span className="text-[10px] text-slate-400 block mt-1">{tx.date}</span>
+                      </td>
+                      <td className="p-4">
+                        <div 
+                          onClick={() => handleOpenDetails(tx)} 
+                          className="font-bold text-slate-800 cursor-pointer hover:text-indigo-600 transition-colors text-xs"
+                          title="Klik untuk detail"
+                        >
+                          {tx.items.length === 1 
+                            ? tx.items[0].namaKlub 
+                            : `${tx.items[0].namaKlub} (+${tx.items.length - 1} Pleton)`}
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-semibold mt-1">
+                          {tx.totalVotes} Suara
+                        </div>
+                        <div className="md:hidden text-[9px] text-slate-400 truncate mt-1 max-w-[120px]" title={tx.voterEmail}>
+                          {tx.voterEmail}
+                        </div>
                       </td>
                       <td className="p-4 font-semibold text-slate-500 hidden md:table-cell">{tx.voterEmail}</td>
-                      <td className="p-4 text-center font-bold text-slate-750">{tx.votesCount} Suara</td>
-                      <td className="p-4 text-right font-extrabold text-slate-900">{formatCurrency(tx.amount)}</td>
-                      <td className="p-4 text-center hidden sm:table-cell">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
+                      <td className="p-4 text-right font-extrabold text-slate-900">{formatCurrency(tx.grandTotal || tx.totalAmount)}</td>
+                      <td className="p-4 text-center">
+                        <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-[10px] ${
                           tx.status === "Lunas" 
                             ? "bg-emerald-50 text-emerald-700" 
                             : tx.status === "Pending" 
@@ -723,17 +839,24 @@ export default function FinanceIndex() {
                         </span>
                       </td>
                       <td className="p-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex flex-wrap items-center justify-center gap-1.5 min-w-[120px]">
+                          <button
+                            onClick={() => handleOpenDetails(tx)}
+                            className="px-2 py-1 bg-indigo-50 hover:bg-indigo-150 text-indigo-650 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                            title="Detail Transaksi"
+                          >
+                            Detail
+                          </button>
                           {tx.status === "Pending" && (
                             <button
-                              onClick={() => handleApproveManual(tx.id)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+                              onClick={() => handleApproveManual(tx.paymentCode)}
+                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
                             >
                               ACC
                             </button>
                           )}
                           <button
-                            onClick={() => handleDeleteTransaction(tx.id, tx.status)}
+                            onClick={() => handleDeleteTransaction(tx.paymentCode, tx.status)}
                             className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
                             title="Hapus Transaksi"
                           >
@@ -745,7 +868,7 @@ export default function FinanceIndex() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-slate-400 font-semibold text-sm">Tidak ditemukan data transaksi yang cocok.</td>
+                    <td colSpan={6} className="p-8 text-center text-slate-400 font-semibold text-sm">Tidak ditemukan data transaksi yang cocok.</td>
                   </tr>
                 )}
               </tbody>
@@ -825,6 +948,95 @@ export default function FinanceIndex() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Tab Switcher Body: Tambah Vote Offline */}
+      {activeTab === "Tambah Vote Offline" && (
+        <div className="bg-white rounded-3xl border border-slate-100 p-6 space-y-6 max-w-xl mx-auto animate-fadeIn">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">Manajemen Tambah Vote Offline</h3>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">
+              Gunakan formulir ini untuk mencatat transaksi pembelian vote secara tunai/offline langsung ke dalam sistem.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmitOfflineVotes} className="space-y-4">
+            {/* Select Pleton */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Pilih Pleton *
+              </label>
+              <div className="relative">
+                <select
+                  required
+                  value={selectedPletonId}
+                  onChange={(e) => setSelectedPletonId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">-- Pilih Pleton --</option>
+                  {pletonList.map((pleton) => {
+                    const { sekolah } = parseBidang(pleton.bidang);
+                    return (
+                      <option key={pleton.id} value={pleton.id}>
+                        {pleton.nama} ({sekolah})
+                      </option>
+                    );
+                  })}
+                </select>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Quantity */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Jumlah Vote *
+              </label>
+              <input
+                type="number"
+                required
+                min={1}
+                step={1}
+                value={offlineVotesQty}
+                onChange={(e) => setOfflineVotesQty(Math.max(1, parseInt(e.target.value) || 1))}
+                placeholder="Masukkan jumlah vote offline"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+              <span className="block text-[10px] text-slate-400 mt-1">
+                Total Rupiah: <span className="font-bold text-slate-750">{formatCurrency(offlineVotesQty * 3000)}</span>
+              </span>
+            </div>
+
+            {/* Optional Email */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Email Pembeli (Opsional)
+              </label>
+              <input
+                type="email"
+                value={offlineVoterEmail}
+                onChange={(e) => setOfflineVoterEmail(e.target.value)}
+                placeholder="Contoh: offline@forbasi.com"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="submit"
+                className="py-2.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md cursor-pointer flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Input Vote Offline
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -940,6 +1152,90 @@ export default function FinanceIndex() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {isDetailModalOpen && selectedGroup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 w-full max-w-lg overflow-hidden animate-scaleIn">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+              <div>
+                <h3 className="text-base font-bold text-slate-800">Detail Transaksi</h3>
+                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">ID: {selectedGroup.paymentCode}</p>
+              </div>
+              <button 
+                onClick={() => setIsDetailModalOpen(false)}
+                className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-650 rounded-xl transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Order Info */}
+              <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-500">
+                <div>
+                  <span className="block text-[10px] text-slate-400 uppercase tracking-wider">Tanggal</span>
+                  <span className="text-slate-800 mt-1 block">{selectedGroup.date}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-slate-400 uppercase tracking-wider">Email Pembeli</span>
+                  <span className="text-slate-800 mt-1 block truncate">{selectedGroup.voterEmail}</span>
+                </div>
+              </div>
+
+              {/* Items Breakdown */}
+              <div className="space-y-3">
+                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rincian Voting Pleton</span>
+                <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/30">
+                  {selectedGroup.items.map((item: any) => (
+                    <div key={item.id} className="flex justify-between items-center p-4 text-xs">
+                      <div>
+                        <p className="font-bold text-slate-800">{item.namaKlub}</p>
+                        <p className="text-[10px] font-semibold text-slate-400 mt-0.5">ID: {item.id}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-slate-900">{item.votesCount} Suara</p>
+                        <p className="text-[10px] font-semibold text-slate-400 mt-0.5">{formatCurrency(item.amount)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Total Summary */}
+              <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                <div>
+                  <span className="text-xs font-bold text-slate-500">Total Keseluruhan</span>
+                  <p className="text-[10px] font-semibold text-slate-400 mt-0.5">({selectedGroup.totalVotes} Suara)</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-black text-emerald-600">{formatCurrency(selectedGroup.grandTotal || selectedGroup.totalAmount)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-2.5">
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-500 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+              {selectedGroup.status === "Pending" && (
+                <button
+                  onClick={() => {
+                    setIsDetailModalOpen(false);
+                    handleApproveManual(selectedGroup.paymentCode);
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
+                >
+                  ACC Transaksi
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
