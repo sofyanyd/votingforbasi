@@ -15,9 +15,9 @@ const router = Router();
 
 router.get("/leaderboard", getLeaderboard);
 router.get("/transactions", requireAdmin, getTransactions);
-router.post("/submit", submitVotes);
+// router.post("/submit", submitVotes); // Dinonaktifkan demi keamanan publik (gunakan alur ACC admin manual)
 router.post("/request-payment", requestPayment);
-router.post("/finalize-payment", finalizePayment);
+router.post("/finalize-payment", requireAdmin, finalizePayment); // Mengamankan tombol ACC agar hanya bisa dipanggil oleh Admin
 router.post("/submit-offline", requireAdmin, submitOfflineVotes);
 router.delete("/transactions/:code", requireAdmin, deleteTransaction);
 

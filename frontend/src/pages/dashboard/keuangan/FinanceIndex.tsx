@@ -26,6 +26,7 @@ interface VoteTransaction {
   kodeUnik?: number;
   grandTotal?: number;
   status: string;
+  createdAt?: string;
 }
 
 export default function FinanceIndex() {
@@ -41,6 +42,9 @@ export default function FinanceIndex() {
   // Filters State
   const [selectedMonth, setSelectedMonth] = useState("Semua");
   const [search, setSearch] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("Semua");
+  const [filterStart, setFilterStart] = useState("");
+  const [filterEnd, setFilterEnd] = useState("");
 
   // Toast Notification State
   const [toast, setToast] = useState<{ message: string; type: "success" | "loading" | "error" | null }>({
@@ -228,10 +232,18 @@ export default function FinanceIndex() {
 
     const matchesMonth =
       selectedMonth === "Semua" ||
+      (selectedMonth === "Juli" && tx.date.includes("Juli")) ||
       (selectedMonth === "Juni" && tx.date.includes("Juni")) ||
       (selectedMonth === "Mei" && tx.date.includes("Mei"));
 
-    return matchesSearch && matchesMonth;
+    const matchesStatus =
+      selectedStatus === "Semua" ||
+      tx.status === selectedStatus;
+
+    const matchesStart = !filterStart || (tx.createdAt && new Date(tx.createdAt) >= new Date(filterStart));
+    const matchesEnd = !filterEnd || (tx.createdAt && new Date(tx.createdAt) <= new Date(filterEnd));
+
+    return matchesSearch && matchesMonth && matchesStatus && matchesStart && matchesEnd;
   });
 
   // Helpers to get base payment code
@@ -564,37 +576,98 @@ export default function FinanceIndex() {
       </div>
 
       {/* 3. Filters Form */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/40 p-4 rounded-2xl border border-slate-100">
-        {/* Search */}
-        <div className="relative">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={activeTab === "Kelola QR Code" ? "Cari QR Code..." : "Cari ID, klub, atau email..."}
-            className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm"
-          />
-          <Search size={18} className="text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        </div>
+      <div className="space-y-3 bg-white/40 p-4 rounded-2xl border border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Search */}
+          <div className="relative">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={activeTab === "Kelola QR Code" ? "Cari QR Code..." : "Cari ID, klub, atau email..."}
+              className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm"
+            />
+            <Search size={18} className="text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          </div>
 
-        {/* Month Filter */}
-        <div className="relative">
-          <select
-            value={selectedMonth}
-            disabled={activeTab === "Kelola QR Code"}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <option value="Semua">Semua Bulan</option>
-            <option value="Juni">Juni 2026</option>
-            <option value="Mei">Mei 2026</option>
-          </select>
-          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-            </svg>
+          {/* Month Filter */}
+          <div className="relative">
+            <select
+              value={selectedMonth}
+              disabled={activeTab === "Kelola QR Code"}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="Semua">Semua Bulan</option>
+              <option value="Juli">Juli 2026</option>
+              <option value="Juni">Juni 2026</option>
+              <option value="Mei">Mei 2026</option>
+            </select>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Status Filter */}
+          <div className="relative">
+            <select
+              value={selectedStatus}
+              disabled={activeTab === "Kelola QR Code" || activeTab === "Tambah Vote Offline"}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="Semua">Semua Status</option>
+              <option value="Pending">Pending (Belum ACC)</option>
+              <option value="Lunas">Lunas (Sudah ACC)</option>
+              <option value="Batal">Batal</option>
+            </select>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
           </div>
         </div>
+
+        {/* Date & Time Range Filter (Only visible if not QR/Offline tabs) */}
+        {activeTab !== "Kelola QR Code" && activeTab !== "Tambah Vote Offline" && (
+          <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-3">
+            <span className="text-xs font-bold text-slate-500 shrink-0">Rentang Waktu:</span>
+            <div className="flex flex-wrap items-center gap-3 w-full">
+              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Mulai</span>
+                <input
+                  type="datetime-local"
+                  value={filterStart}
+                  onChange={(e) => setFilterStart(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Selesai</span>
+                <input
+                  type="datetime-local"
+                  value={filterEnd}
+                  onChange={(e) => setFilterEnd(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm"
+                />
+              </div>
+              {(filterStart || filterEnd) && (
+                <button
+                  onClick={() => {
+                    setFilterStart("");
+                    setFilterEnd("");
+                  }}
+                  className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-[0.98]"
+                >
+                  Reset Filter
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 4. Tab Navigation */}

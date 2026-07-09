@@ -88,7 +88,8 @@ export const getTransactions = async (req: Request, res: Response) => {
         amount: t.amount,
         kodeUnik: t.kode_unik || 0,
         grandTotal: t.grand_total || t.amount,
-        status: t.status === "pending" ? "Pending" : t.status === "Lunas" ? "Lunas" : t.status === "Batal" ? "Batal" : t.status
+        status: t.status === "pending" ? "Pending" : t.status === "Lunas" ? "Lunas" : t.status === "Batal" ? "Batal" : t.status,
+        createdAt: t.created_at
       };
     });
 
@@ -288,35 +289,30 @@ export const completePayment = async (paymentCode: string) => {
       }
     });
 
-    // 3. Generate tickets and cast votes in DB
+    // 3. Generate tickets and cast votes in DB sequentially to avoid transaction connection deadlock
     for (const transaction of transactions) {
       const finalistId = transaction.finalist_id;
       const qty = transaction.votes_count;
 
-      const votePromises = [];
       for (let i = 0; i < qty; i++) {
         const ticketCode = `TXV-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-        
-        votePromises.push((async () => {
-          const newTicket = await tx.tickets.create({
-            data: {
-              code: ticketCode,
-              status: "used",
-              user_id: userId,
-              used_at: new Date()
-            }
-          });
+        const newTicket = await tx.tickets.create({
+          data: {
+            code: ticketCode,
+            status: "used",
+            user_id: userId,
+            used_at: new Date()
+          }
+        });
 
-          await tx.votes.create({
-            data: {
-              user_id: userId,
-              finalist_id: finalistId,
-              ticket_id: newTicket.id
-            }
-          });
-        })());
+        await tx.votes.create({
+          data: {
+            user_id: userId,
+            finalist_id: finalistId,
+            ticket_id: newTicket.id
+          }
+        });
       }
-      await Promise.all(votePromises);
     }
 
     console.log(`Payment code ${paymentCode} completed successfully. Casted votes.`);

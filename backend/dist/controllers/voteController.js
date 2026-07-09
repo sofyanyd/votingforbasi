@@ -75,7 +75,8 @@ export const getTransactions = async (req, res) => {
                 amount: t.amount,
                 kodeUnik: t.kode_unik || 0,
                 grandTotal: t.grand_total || t.amount,
-                status: t.status === "pending" ? "Pending" : t.status === "Lunas" ? "Lunas" : t.status === "Batal" ? "Batal" : t.status
+                status: t.status === "pending" ? "Pending" : t.status === "Lunas" ? "Lunas" : t.status === "Batal" ? "Batal" : t.status,
+                createdAt: t.created_at
             };
         });
         res.status(200).json(mapped);
@@ -251,32 +252,28 @@ export const completePayment = async (paymentCode) => {
                 status: "Lunas"
             }
         });
-        // 3. Generate tickets and cast votes in DB
+        // 3. Generate tickets and cast votes in DB sequentially to avoid transaction connection deadlock
         for (const transaction of transactions) {
             const finalistId = transaction.finalist_id;
             const qty = transaction.votes_count;
-            const votePromises = [];
             for (let i = 0; i < qty; i++) {
                 const ticketCode = `TXV-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-                votePromises.push((async () => {
-                    const newTicket = await tx.tickets.create({
-                        data: {
-                            code: ticketCode,
-                            status: "used",
-                            user_id: userId,
-                            used_at: new Date()
-                        }
-                    });
-                    await tx.votes.create({
-                        data: {
-                            user_id: userId,
-                            finalist_id: finalistId,
-                            ticket_id: newTicket.id
-                        }
-                    });
-                })());
+                const newTicket = await tx.tickets.create({
+                    data: {
+                        code: ticketCode,
+                        status: "used",
+                        user_id: userId,
+                        used_at: new Date()
+                    }
+                });
+                await tx.votes.create({
+                    data: {
+                        user_id: userId,
+                        finalist_id: finalistId,
+                        ticket_id: newTicket.id
+                    }
+                });
             }
-            await Promise.all(votePromises);
         }
         console.log(`Payment code ${paymentCode} completed successfully. Casted votes.`);
         clearLeaderboardCache();
@@ -466,11 +463,11 @@ export const submitOfflineVotes = async (req, res) => {
                     code: transactionCode,
                     finalist_id: finalistIdNum,
                     votes_count: votesCountNum,
-                    amount: votesCountNum * 5000,
+                    amount: votesCountNum * 3000,
                     voter_email: email,
                     status: "Lunas",
                     kode_unik: 0,
-                    grand_total: votesCountNum * 5000
+                    grand_total: votesCountNum * 3000
                 }
             });
             // 2. Create tickets and votes
