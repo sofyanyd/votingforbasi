@@ -289,30 +289,43 @@ export const completePayment = async (paymentCode: string) => {
       }
     });
 
-    // 3. Generate tickets and cast votes in DB sequentially to avoid transaction connection deadlock
+    // 3. Generate tickets and cast votes in DB in bulk to avoid roundtrip overhead
     for (const transaction of transactions) {
       const finalistId = transaction.finalist_id;
       const qty = transaction.votes_count;
 
+      const ticketCodes: string[] = [];
       for (let i = 0; i < qty; i++) {
-        const ticketCode = `TXV-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-        const newTicket = await tx.tickets.create({
-          data: {
-            code: ticketCode,
-            status: "used",
-            user_id: userId,
-            used_at: new Date()
-          }
-        });
-
-        await tx.votes.create({
-          data: {
-            user_id: userId,
-            finalist_id: finalistId,
-            ticket_id: newTicket.id
-          }
-        });
+        const ticketCode = `TXV-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${i}-${Math.floor(100 + Math.random() * 900)}`;
+        ticketCodes.push(ticketCode);
       }
+
+      // Step A: Bulk insert tickets
+      await tx.tickets.createMany({
+        data: ticketCodes.map(code => ({
+          code,
+          status: "used",
+          user_id: userId,
+          used_at: new Date()
+        }))
+      });
+
+      // Step B: Fetch the created tickets to get their generated IDs
+      const createdTickets = await tx.tickets.findMany({
+        where: {
+          code: { in: ticketCodes }
+        },
+        select: { id: true }
+      });
+
+      // Step C: Bulk insert votes linking to the fetched ticket IDs
+      await tx.votes.createMany({
+        data: createdTickets.map(t => ({
+          user_id: userId,
+          finalist_id: finalistId,
+          ticket_id: t.id
+        }))
+      });
     }
 
     console.log(`Payment code ${paymentCode} completed successfully. Casted votes.`);
@@ -537,26 +550,39 @@ export const submitOfflineVotes = async (req: Request, res: Response) => {
         }
       });
 
-      // 2. Create tickets and votes
+      // 2. Create tickets and votes in bulk to avoid roundtrip overhead
+      const ticketCodes: string[] = [];
       for (let i = 0; i < votesCountNum; i++) {
-        const ticketCode = `TXV-${paymentCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-        const newTicket = await tx.tickets.create({
-          data: {
-            code: ticketCode,
-            status: "used",
-            user_id: userId,
-            used_at: new Date()
-          }
-        });
-
-        await tx.votes.create({
-          data: {
-            user_id: userId,
-            finalist_id: finalistIdNum,
-            ticket_id: newTicket.id
-          }
-        });
+        const ticketCode = `TXV-${paymentCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${i}-${Math.floor(100 + Math.random() * 900)}`;
+        ticketCodes.push(ticketCode);
       }
+
+      // Step A: Bulk insert tickets
+      await tx.tickets.createMany({
+        data: ticketCodes.map(code => ({
+          code,
+          status: "used",
+          user_id: userId,
+          used_at: new Date()
+        }))
+      });
+
+      // Step B: Fetch the created tickets to get their generated IDs
+      const createdTickets = await tx.tickets.findMany({
+        where: {
+          code: { in: ticketCodes }
+        },
+        select: { id: true }
+      });
+
+      // Step C: Bulk insert votes linking to the fetched ticket IDs
+      await tx.votes.createMany({
+        data: createdTickets.map(t => ({
+          user_id: userId,
+          finalist_id: finalistIdNum,
+          ticket_id: t.id
+        }))
+      });
     }, {
       maxWait: 15000,
       timeout: 60000 // 60 seconds timeout
