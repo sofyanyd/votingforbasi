@@ -5,6 +5,9 @@ import axios from "axios";
 import { API_BASE_URL } from "../config";
 import Button from "../components/ui/Button";
 
+// Tentukan apakah periode voting sudah berakhir (true = ditutup, false = dibuka)
+export const IS_VOTING_CLOSED = true;
+
 interface Participant {
   id: number;
   name: string;
@@ -63,6 +66,10 @@ export default function CatalogVote() {
 
   // Di dalam CatalogVote.tsx
 const handleSubmitVotes = async () => {
+  if (IS_VOTING_CLOSED) {
+    alert("Voting telah ditutup. Pembelian suara baru tidak diizinkan.");
+    return;
+  }
   setSubmitting(true);
   try {
     // 1. Minta backend membuat transaksi status "pending"
@@ -81,6 +88,7 @@ const handleSubmitVotes = async () => {
 };
 
   const handleUpdateQty = (participant: Participant, delta: number) => {
+    if (IS_VOTING_CLOSED) return;
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === participant.id);
       if (existingItem) {
@@ -118,6 +126,25 @@ const handleSubmitVotes = async () => {
           <h1 className="text-xl md:text-2xl font-black text-slate-900 mb-6 flex items-center gap-2">
             Katalog <span className="text-emerald-600">Finalis</span>
           </h1>
+
+          {IS_VOTING_CLOSED && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl flex items-start gap-3 mb-6 shadow-sm">
+              <Info size={20} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-sm">Voting Telah Ditutup</h4>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Periode voting untuk KEJURCAB 2026 telah berakhir. Pembelian suara baru tidak lagi diizinkan. 
+                  Silakan pantau perolehan suara akhir finalis di halaman Leaderboard sampai sesi penyerahan piala!
+                </p>
+                <button 
+                  onClick={() => navigate("/leaderboard")} 
+                  className="mt-2 text-xs font-extrabold text-amber-900 hover:text-emerald-700 transition-colors flex items-center gap-1 bg-amber-100 hover:bg-amber-200/70 px-3 py-1.5 rounded-lg border border-amber-250/50 shadow-sm cursor-pointer"
+                >
+                  Pantau Hasil di Leaderboard &rarr;
+                </button>
+              </div>
+            </div>
+          )}
           
           {loading ? (
             <div className="text-center py-10 text-slate-500 font-semibold bg-white rounded-xl border border-slate-200">
@@ -145,7 +172,14 @@ const handleSubmitVotes = async () => {
                       <p className="font-black text-emerald-600 text-sm mt-1 mb-3">Rp {p.price.toLocaleString("id-ID")}</p>
 
                       <div className="mt-auto">
-                        {qty === 0 ? (
+                        {IS_VOTING_CLOSED ? (
+                          <button
+                            disabled
+                            className="w-full py-2.5 text-xs md:text-sm font-bold rounded-xl bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed text-center"
+                          >
+                            Voting Ditutup
+                          </button>
+                        ) : qty === 0 ? (
                           <Button 
                             variant="outline"
                             onClick={() => handleUpdateQty(p, 1)}
@@ -187,7 +221,13 @@ const handleSubmitVotes = async () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 bg-white">
-            {cart.length === 0 ? (
+            {IS_VOTING_CLOSED ? (
+              <div className="text-center text-slate-400 py-10 flex flex-col items-center gap-2">
+                <Info size={40} className="text-slate-300" />
+                <p className="text-sm font-bold text-slate-700">Voting Telah Ditutup</p>
+                <p className="text-xs text-slate-400 px-4 text-center mt-1">Pembelian suara sudah tidak dapat diproses lagi.</p>
+              </div>
+            ) : cart.length === 0 ? (
               <div className="text-center text-slate-300 py-10 flex flex-col items-center gap-2">
                 <ShoppingCart size={40} />
                 <p className="text-sm font-medium">Keranjang kosong.</p>
@@ -228,7 +268,7 @@ const handleSubmitVotes = async () => {
             </button>
             
             <p className="flex text-slate-400 text-[10px] mt-3 justify-center items-center gap-1 font-medium">
-               <Info size={12} /> Pembayaran aman via Midtrans
+               
             </p>
           </div>
         </div>

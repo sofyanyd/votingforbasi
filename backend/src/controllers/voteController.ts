@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import crypto from "crypto";
 import prisma from "../lib/prisma.js";
 
+// Tentukan apakah periode voting sudah berakhir (true = ditutup, false = dibuka)
+export const IS_VOTING_CLOSED = true;
+
 let leaderboardCache: any = null;
 let leaderboardCacheTime = 0;
 
@@ -178,6 +181,9 @@ export const submitVotes = async (req: Request, res: Response) => {
 
 export const requestPayment = async (req: Request, res: Response) => {
   try {
+    if (IS_VOTING_CLOSED) {
+      return res.status(400).json({ message: "Voting telah ditutup. Pembelian suara baru tidak diizinkan." });
+    }
     const { cart } = req.body;
     if (!cart || !Array.isArray(cart) || cart.length === 0) {
       return res.status(400).json({ message: "Keranjang vote kosong atau tidak valid" });
